@@ -15,13 +15,17 @@ import {
 	ListItemText,
 	Paper,
 	Divider,
-	Stack
+	Stack,
+	Accordion,
+	AccordionSummary,
+	AccordionDetails
 } from '@mui/material';
 import {
 	WorkOutline as WorkIcon,
 	Person as PersonIcon,
 	EmojiEvents as TrophyIcon,
-	Assessment as AssessmentIcon
+	Assessment as AssessmentIcon,
+	ExpandMore as ExpandMoreIcon
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { getStoredJobDescriptions } from '../../api/services/storageApi';
@@ -36,6 +40,7 @@ export default function JobDescriptionsView() {
 	const [selectedJD, setSelectedJD] = useState<JobDescription | null>(null);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [processingProgress, setProcessingProgress] = useState({ progress: 0, total: 0 });
+	const [expandedCandidate, setExpandedCandidate] = useState<string | false>(false);
 
 	// Obtener todas las Job Descriptions
 	const {
@@ -310,11 +315,17 @@ export default function JobDescriptionsView() {
 					Analysis".
 				</Alert>
 			) : (
-				<Stack spacing={2}>
+				<Stack spacing={1}>
 					{results
-						.sort((a, b) => b.overall_score - a.overall_score)
+						.sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
 						.map((candidate, index) => (
-							<CandidateCard key={candidate.candidate_id} candidate={candidate} rank={index + 1} />
+							<CandidateCard 
+								key={candidate.candidate_id} 
+								candidate={candidate} 
+								rank={index + 1}
+								expanded={expandedCandidate === candidate.candidate_id}
+								onChange={(id) => setExpandedCandidate(expandedCandidate === id ? false : id)}
+							/>
 						))}
 				</Stack>
 			)}
@@ -323,9 +334,19 @@ export default function JobDescriptionsView() {
 }
 
 /**
- * CandidateCard - Tarjeta individual de candidato
+ * CandidateCard - Acordeón compacto de candidato
  */
-function CandidateCard({ candidate, rank }: { candidate: AnalysisResult; rank: number }) {
+function CandidateCard({ 
+	candidate, 
+	rank, 
+	expanded, 
+	onChange 
+}: { 
+	candidate: AnalysisResult; 
+	rank: number;
+	expanded: boolean;
+	onChange: (candidateId: string) => void;
+}) {
 	const getRankColor = (rankNum: number) => {
 		if (rankNum === 1) return 'gold';
 		if (rankNum === 2) return 'silver';
@@ -340,26 +361,40 @@ function CandidateCard({ candidate, rank }: { candidate: AnalysisResult; rank: n
 	};
 
 	return (
-		<Card
+		<Accordion 
+			expanded={expanded}
+			onChange={() => onChange(candidate.candidate_id)}
 			sx={{
-				border: rank <= 3 ? 2 : 0,
-				borderColor: rank <= 3 ? getRankColor(rank) : 'transparent'
+				border: rank <= 3 ? 2 : 1,
+				borderColor: rank <= 3 ? getRankColor(rank) : 'divider',
+				'&:before': { display: 'none' },
+				boxShadow: expanded ? 3 : 1
 			}}
 		>
-			<CardContent>
-				<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+			<AccordionSummary 
+				expandIcon={<ExpandMoreIcon />}
+				sx={{ 
+					minHeight: 64,
+					'&.Mui-expanded': { minHeight: 64 },
+					'& .MuiAccordionSummary-content': {
+						margin: '12px 0',
+						alignItems: 'center'
+					}
+				}}
+			>
+				<Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%', pr: 2 }}>
 					{/* Rank Badge */}
 					<Box
 						sx={{
-							width: 60,
-							height: 60,
+							width: 40,
+							height: 40,
 							borderRadius: '50%',
 							bgcolor: rank <= 3 ? getRankColor(rank) : 'grey.300',
 							display: 'flex',
 							alignItems: 'center',
 							justifyContent: 'center',
 							fontWeight: 'bold',
-							fontSize: 24,
+							fontSize: 18,
 							color: rank <= 3 ? 'white' : 'text.primary',
 							flexShrink: 0
 						}}
@@ -367,91 +402,124 @@ function CandidateCard({ candidate, rank }: { candidate: AnalysisResult; rank: n
 						#{rank}
 					</Box>
 
-					{/* Candidate Name */}
-					<Box sx={{ flex: 1, minWidth: 200 }}>
-						<Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-							<PersonIcon />
+					{/* Candidate Name & Score */}
+					<Box sx={{ flex: 1, minWidth: 0 }}>
+						<Typography 
+							variant="subtitle1" 
+							sx={{ 
+								fontWeight: 600,
+								overflow: 'hidden',
+								textOverflow: 'ellipsis',
+								whiteSpace: 'nowrap'
+							}}
+						>
 							{candidate.name}
 						</Typography>
 						<Typography variant="caption" color="text.secondary">
-							ID: {candidate.candidate_id}
+							{Array.isArray(candidate.must_have_matches) 
+								? candidate.must_have_matches.length 
+								: 0} must-have requirements matched
 						</Typography>
 					</Box>
 
-					{/* Scores */}
-					<Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-						<Box sx={{ textAlign: 'center' }}>
+					{/* Score Badge */}
+					<Chip
+						label={`${(candidate.final_score || 0).toFixed(1)}`}
+						sx={{
+							bgcolor: getScoreColor(candidate.final_score || 0),
+							color: 'white',
+							fontWeight: 'bold',
+							fontSize: 16,
+							height: 36,
+							minWidth: 60
+						}}
+					/>
+				</Box>
+			</AccordionSummary>
+
+			<AccordionDetails sx={{ pt: 0 }}>
+				<Divider sx={{ mb: 2 }} />
+				
+				{/* Detailed Scores */}
+				<Box sx={{ mb: 3 }}>
+					<Typography variant="subtitle2" gutterBottom color="text.secondary">
+						Score Breakdown
+					</Typography>
+					<Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mt: 1 }}>
+						<Box>
 							<Typography variant="caption" color="text.secondary">
-								Overall Score
+								Similarity Score
 							</Typography>
-							<Typography
-								variant="h5"
-								sx={{ color: getScoreColor(candidate.final_score || 0), fontWeight: 'bold' }}
-							>
-								{(candidate.final_score || 0).toFixed(1)}
+							<Typography variant="h6" fontWeight="bold">
+								{(candidate.similarity_score || 0).toFixed(1)}
 							</Typography>
 						</Box>
-						<Box sx={{ textAlign: 'center' }}>
+						<Box>
 							<Typography variant="caption" color="text.secondary">
-								Similarity
+								Must-Have Matches
 							</Typography>
-							<Typography variant="h6">{(candidate.similarity_score || 0).toFixed(1)}</Typography>
-						</Box>
-						<Box sx={{ textAlign: 'center' }}>
-							<Typography variant="caption" color="text.secondary">
-								Must-Have
-							</Typography>
-							<Typography variant="h6">
+							<Typography variant="h6" fontWeight="bold">
 								{Array.isArray(candidate.must_have_matches) 
 									? candidate.must_have_matches.length 
 									: 0}
 							</Typography>
 						</Box>
-						<Box sx={{ textAlign: 'center' }}>
+						<Box>
 							<Typography variant="caption" color="text.secondary">
-								Recency
+								Recency Boost
 							</Typography>
-							<Typography variant="h6">{(candidate.recency_boost || 0).toFixed(1)}</Typography>
+							<Typography variant="h6" fontWeight="bold">
+								{(candidate.recency_boost || 0).toFixed(1)}
+							</Typography>
 						</Box>
 					</Box>
 				</Box>
 
-				{/* Reason Codes */}
-				{candidate.reason_codes && candidate.reason_codes.length > 0 && (
-					<Box sx={{ mt: 2 }}>
-						<Typography variant="subtitle2" gutterBottom>
-							Reason Codes:
-						</Typography>
-						<Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
-							{candidate.reason_codes.map((reason, idx) => (
-								<Chip
-									key={idx}
-									label={typeof reason === 'string' ? reason : reason.code || reason.description}
-									size="small"
-									variant="outlined"
-									title={typeof reason === 'object' ? reason.description : undefined}
-								/>
-							))}
-						</Stack>
-					</Box>
-				)}
+				{/* Candidate ID */}
+				<Box sx={{ mb: 2 }}>
+					<Typography variant="caption" color="text.secondary">
+						Candidate ID: {candidate.candidate_id}
+					</Typography>
+				</Box>
 
 				{/* Matched Requirements */}
 				{candidate.must_have_matches && candidate.must_have_matches.length > 0 && (
-					<Box sx={{ mt: 2 }}>
+					<Box sx={{ mb: 2 }}>
 						<Typography variant="subtitle2" gutterBottom>
 							Matched Must-Have Requirements:
 						</Typography>
-						<List dense>
+						<List dense disablePadding>
 							{candidate.must_have_matches.map((req, idx) => (
-								<ListItem key={idx} disablePadding>
-									<ListItemText primary={`✓ ${req}`} />
+								<ListItem key={idx} sx={{ py: 0.5, px: 0 }}>
+									<ListItemText 
+										primary={`✓ ${req}`}
+										primaryTypographyProps={{ variant: 'body2' }}
+									/>
 								</ListItem>
 							))}
 						</List>
 					</Box>
 				)}
-			</CardContent>
-		</Card>
+
+				{/* Reason Codes */}
+				{candidate.reason_codes && candidate.reason_codes.length > 0 && (
+					<Box>
+						<Typography variant="subtitle2" gutterBottom>
+							Analysis Reasons:
+						</Typography>
+						<Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
+							{candidate.reason_codes.map((reason, idx) => (
+								<Chip
+									key={idx}
+									label={reason}
+									size="small"
+									variant="outlined"
+								/>
+							))}
+						</Stack>
+					</Box>
+				)}
+			</AccordionDetails>
+		</Accordion>
 	);
 }

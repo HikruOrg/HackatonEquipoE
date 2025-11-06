@@ -53,7 +53,7 @@ export default function TalentMatcherAppView() {
 
 	const handleNewAnalysis = () => {
 		setCurrentView('upload');
-		setMainTab(0);
+		setMainTab(1); // Tab 1 is now "New Analysis"
 		setResults([]);
 		setAnalysisId(null);
 		setUploadTab(0);
@@ -62,9 +62,9 @@ export default function TalentMatcherAppView() {
 	const handleMainTabChange = (_: unknown, newValue: number) => {
 		setMainTab(newValue);
 		if (newValue === 0) {
-			setCurrentView('upload');
-		} else if (newValue === 1) {
 			setCurrentView('job-descriptions');
+		} else if (newValue === 1) {
+			setCurrentView('upload');
 		}
 	};
 
@@ -75,13 +75,16 @@ export default function TalentMatcherAppView() {
 					{/* Main Navigation Tabs */}
 					<Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
 						<Tabs value={mainTab} onChange={handleMainTabChange}>
-							<Tab label="New Analysis" />
 							<Tab label="Job Descriptions & Results" />
+							<Tab label="New Analysis" />
 						</Tabs>
 					</Box>
 
+					{/* Job Descriptions Tab */}
+					{mainTab === 0 && <JobDescriptionsView />}
+
 					{/* New Analysis Tab */}
-					{mainTab === 0 && (
+					{mainTab === 1 && (
 						<>
 							{currentView === 'upload' && (
 								<>
@@ -111,9 +114,6 @@ export default function TalentMatcherAppView() {
 							)}
 						</>
 					)}
-
-					{/* Job Descriptions Tab */}
-					{mainTab === 1 && <JobDescriptionsView />}
 				</Box>
 			}
 		/>
