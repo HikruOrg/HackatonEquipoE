@@ -235,11 +235,12 @@ export default function JobDescriptionsView() {
 		);
 	}
 
-	// Vista de candidatos rankeados para la JD seleccionada
+	// Vista de candidatos rankeados para la JD seleccionada (Layout 65-35)
 	return (
 		<Box sx={{ p: 3 }}>
-			<Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-				<Button onClick={handleBack}>
+			{/* Header con botones de acción */}
+			<Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
+				<Button onClick={handleBack} variant="outlined">
 					← Back to Job Descriptions
 				</Button>
 				<Button 
@@ -255,80 +256,161 @@ export default function JobDescriptionsView() {
 				</Button>
 			</Box>
 
-			<Paper sx={{ p: 3, mb: 3 }}>
-				<Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-					<WorkIcon />
-					{selectedJD.title}
-				</Typography>
+			{/* Layout 65-35: JD a la izquierda, Candidatos a la derecha */}
+			<Box sx={{ 
+				display: 'flex', 
+				gap: 3,
+				flexDirection: { xs: 'column', lg: 'row' },
+				alignItems: 'flex-start'
+			}}>
+				{/* COLUMNA IZQUIERDA: Job Description (65%) */}
+				<Paper 
+					sx={{ 
+						p: 3, 
+						flex: { xs: '1 1 100%', lg: '0 0 65%' },
+						maxWidth: { lg: '65%' },
+						position: { lg: 'sticky' },
+						top: { lg: 24 },
+						maxHeight: { lg: 'calc(100vh - 200px)' },
+						overflowY: { lg: 'auto' }
+					}}
+				>
+					<Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+						<WorkIcon />
+						{selectedJD.title}
+					</Typography>
 
-				<Typography variant="body1" color="text.secondary" paragraph>
-					{selectedJD.description}
-				</Typography>
+					<Divider sx={{ my: 2 }} />
 
-				<Divider sx={{ my: 2 }} />
+					<Typography variant="body1" paragraph>
+						{selectedJD.description}
+					</Typography>
 
-				<Typography variant="subtitle2" gutterBottom>
-					Must-Have Requirements:
-				</Typography>
-				<Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 2, gap: 1 }}>
-					{selectedJD.must_have_requirements?.map((req, idx) => (
-						<Chip key={idx} label={req} color="primary" />
-					))}
-				</Stack>
+					<Divider sx={{ my: 2 }} />
 
-				{selectedJD.nice_to_have && selectedJD.nice_to_have.length > 0 && (
-					<>
-						<Typography variant="subtitle2" gutterBottom>
-							Nice-to-Have:
+					{/* Experience Required */}
+					{selectedJD.experience_years_required && (
+						<Box sx={{ mb: 3 }}>
+							<Typography variant="subtitle2" color="primary" gutterBottom>
+								Experience Required
+							</Typography>
+							<Typography variant="body1">
+								{selectedJD.experience_years_required}+ years
+							</Typography>
+						</Box>
+					)}
+
+					{/* Must-Have Requirements */}
+					<Box sx={{ mb: 3 }}>
+						<Typography variant="subtitle2" color="primary" gutterBottom>
+							Must-Have Requirements ({selectedJD.must_have_requirements?.length || 0})
 						</Typography>
-						<Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
-							{selectedJD.nice_to_have.map((req, idx) => (
-								<Chip key={idx} label={req} variant="outlined" />
+						<Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1, gap: 1 }}>
+							{selectedJD.must_have_requirements?.map((req, idx) => (
+								<Chip key={idx} label={req} color="primary" size="small" />
 							))}
 						</Stack>
-					</>
-				)}
-			</Paper>
+					</Box>
 
-			<Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-				<TrophyIcon />
-				Ranked Candidates
-			</Typography>
+					{/* Nice-to-Have */}
+					{selectedJD.nice_to_have && selectedJD.nice_to_have.length > 0 && (
+						<Box sx={{ mb: 3 }}>
+							<Typography variant="subtitle2" color="primary" gutterBottom>
+								Nice-to-Have ({selectedJD.nice_to_have.length})
+							</Typography>
+							<Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1, gap: 1 }}>
+								{selectedJD.nice_to_have.map((req, idx) => (
+									<Chip key={idx} label={req} variant="outlined" size="small" />
+								))}
+							</Stack>
+						</Box>
+					)}
 
-			{isLoadingResults ? (
-				<Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-					<CircularProgress />
+					{/* Raw Text Preview */}
+					{selectedJD.raw_text && (
+						<Box sx={{ mb: 3 }}>
+							<Typography variant="subtitle2" color="primary" gutterBottom>
+								Additional Details
+							</Typography>
+							<Typography 
+								variant="body2" 
+								color="text.secondary"
+								sx={{
+									maxHeight: 200,
+									overflowY: 'auto',
+									whiteSpace: 'pre-wrap',
+									bgcolor: 'grey.50',
+									p: 2,
+									borderRadius: 1,
+									fontSize: '0.875rem'
+								}}
+							>
+								{selectedJD.raw_text}
+							</Typography>
+						</Box>
+					)}
+				</Paper>
+
+				{/* COLUMNA DERECHA: Candidatos Rankeados (35%) */}
+				<Box sx={{ 
+					flex: { xs: '1 1 100%', lg: '0 0 35%' },
+					maxWidth: { lg: '35%' },
+					width: '100%'
+				}}>
+					<Typography 
+						variant="h5" 
+						gutterBottom 
+						sx={{ 
+							display: 'flex', 
+							alignItems: 'center', 
+							gap: 1,
+							mb: 2,
+							position: 'sticky',
+							top: 0,
+							bgcolor: 'background.default',
+							zIndex: 1,
+							py: 1
+						}}
+					>
+						<TrophyIcon />
+						Ranked Candidates
+					</Typography>
+
+					{isLoadingResults ? (
+						<Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+							<CircularProgress />
+						</Box>
+					) : resultsError ? (
+						<Alert severity="warning">
+							No hay resultados disponibles. Para ver candidatos rankeados, primero debes:
+							<br />
+							1. Ir a la pestaña "New Analysis"
+							<br />
+							2. Subir resumes y esta job description
+							<br />
+							3. Ejecutar el análisis
+						</Alert>
+					) : !results || results.length === 0 ? (
+						<Alert severity="info">
+							No hay candidatos evaluados para esta posición. Haz click en "Process Candidates" para analizar los resumes almacenados.
+						</Alert>
+					) : (
+						<Stack spacing={1.5}>
+							{results
+								.sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
+								.map((candidate, index) => (
+									<CandidateCard 
+										key={candidate.candidate_id} 
+										candidate={candidate} 
+										rank={index + 1}
+										expanded={expandedCandidate === candidate.candidate_id}
+										onChange={(id) => setExpandedCandidate(expandedCandidate === id ? false : id)}
+									/>
+								))}
+						</Stack>
+					)}
 				</Box>
-			) : resultsError ? (
-				<Alert severity="warning">
-					No hay resultados disponibles. Para ver candidatos rankeados, primero debes:
-					<br />
-					1. Ir a la pestaña "New Analysis"
-					<br />
-					2. Subir resumes y esta job description
-					<br />
-					3. Ejecutar el análisis
-				</Alert>
-			) : !results || results.length === 0 ? (
-				<Alert severity="info">
-					No hay candidatos evaluados para esta posición. Ejecuta un análisis primero desde la pestaña "New
-					Analysis".
-				</Alert>
-			) : (
-				<Stack spacing={1}>
-					{results
-						.sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
-						.map((candidate, index) => (
-							<CandidateCard 
-								key={candidate.candidate_id} 
-								candidate={candidate} 
-								rank={index + 1}
-								expanded={expandedCandidate === candidate.candidate_id}
-								onChange={(id) => setExpandedCandidate(expandedCandidate === id ? false : id)}
-							/>
-						))}
-				</Stack>
-			)}
+			</Box>
 		</Box>
 	);
 }
@@ -348,16 +430,24 @@ function CandidateCard({
 	onChange: (candidateId: string) => void;
 }) {
 	const getRankColor = (rankNum: number) => {
-		if (rankNum === 1) return 'gold';
-		if (rankNum === 2) return 'silver';
-		if (rankNum === 3) return '#cd7f32'; // bronze
-		return 'text.secondary';
+		if (rankNum === 1) return '#FFD700'; // gold
+		if (rankNum === 2) return '#C0C0C0'; // silver
+		if (rankNum === 3) return '#CD7F32'; // bronze
+		return 'grey.400';
+	};
+
+	const getRankBgColor = (rankNum: number) => {
+		if (rankNum === 1) return 'rgba(255, 215, 0, 0.15)';
+		if (rankNum === 2) return 'rgba(192, 192, 192, 0.15)';
+		if (rankNum === 3) return 'rgba(205, 127, 50, 0.15)';
+		return 'transparent';
 	};
 
 	const getScoreColor = (score: number) => {
-		if (score >= 80) return 'success.main';
-		if (score >= 60) return 'warning.main';
-		return 'error.main';
+		if (score >= 80) return '#4caf50'; // green
+		if (score >= 60) return '#ff9800'; // orange
+		if (score >= 40) return '#ff5722'; // deep orange
+		return '#f44336'; // red
 	};
 
 	return (
@@ -365,57 +455,78 @@ function CandidateCard({
 			expanded={expanded}
 			onChange={() => onChange(candidate.candidate_id)}
 			sx={{
-				border: rank <= 3 ? 2 : 1,
+				border: 1,
 				borderColor: rank <= 3 ? getRankColor(rank) : 'divider',
+				borderWidth: rank <= 3 ? 2 : 1,
+				bgcolor: getRankBgColor(rank),
 				'&:before': { display: 'none' },
-				boxShadow: expanded ? 3 : 1
+				boxShadow: expanded ? 3 : 1,
+				borderRadius: 1,
+				'&:not(:last-child)': {
+					mb: 0
+				}
 			}}
 		>
 			<AccordionSummary 
 				expandIcon={<ExpandMoreIcon />}
 				sx={{ 
-					minHeight: 64,
-					'&.Mui-expanded': { minHeight: 64 },
+					minHeight: 72,
+					'&.Mui-expanded': { minHeight: 72 },
 					'& .MuiAccordionSummary-content': {
-						margin: '12px 0',
+						my: 1.5,
 						alignItems: 'center'
 					}
 				}}
 			>
-				<Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%', pr: 2 }}>
+				<Box sx={{ 
+					display: 'flex', 
+					alignItems: 'center', 
+					gap: 1.5, 
+					width: '100%', 
+					pr: 1 
+				}}>
 					{/* Rank Badge */}
 					<Box
 						sx={{
-							width: 40,
-							height: 40,
+							width: 44,
+							height: 44,
 							borderRadius: '50%',
-							bgcolor: rank <= 3 ? getRankColor(rank) : 'grey.300',
+							bgcolor: getRankColor(rank),
 							display: 'flex',
 							alignItems: 'center',
 							justifyContent: 'center',
 							fontWeight: 'bold',
-							fontSize: 18,
-							color: rank <= 3 ? 'white' : 'text.primary',
-							flexShrink: 0
+							fontSize: 16,
+							color: 'white',
+							flexShrink: 0,
+							boxShadow: 1
 						}}
 					>
 						#{rank}
 					</Box>
 
-					{/* Candidate Name & Score */}
-					<Box sx={{ flex: 1, minWidth: 0 }}>
+					{/* Candidate Name & Info */}
+					<Box sx={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
 						<Typography 
-							variant="subtitle1" 
+							variant="subtitle2" 
 							sx={{ 
 								fontWeight: 600,
 								overflow: 'hidden',
 								textOverflow: 'ellipsis',
-								whiteSpace: 'nowrap'
+								whiteSpace: 'nowrap',
+								mb: 0.25
 							}}
 						>
 							{candidate.name}
 						</Typography>
-						<Typography variant="caption" color="text.secondary">
+						<Typography 
+							variant="caption" 
+							color="text.secondary"
+							sx={{
+								display: 'block',
+								fontSize: '0.7rem'
+							}}
+						>
 							{Array.isArray(candidate.must_have_matches) 
 								? candidate.must_have_matches.length 
 								: 0} must-have requirements matched
@@ -423,77 +534,94 @@ function CandidateCard({
 					</Box>
 
 					{/* Score Badge */}
-					<Chip
-						label={`${(candidate.final_score || 0).toFixed(1)}`}
+					<Box
 						sx={{
 							bgcolor: getScoreColor(candidate.final_score || 0),
 							color: 'white',
 							fontWeight: 'bold',
-							fontSize: 16,
-							height: 36,
-							minWidth: 60
+							fontSize: 18,
+							height: 44,
+							minWidth: 60,
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+							borderRadius: 1,
+							flexShrink: 0,
+							boxShadow: 1
 						}}
-					/>
+					>
+						{(candidate.final_score || 0).toFixed(1)}
+					</Box>
 				</Box>
 			</AccordionSummary>
 
-			<AccordionDetails sx={{ pt: 0 }}>
+			<AccordionDetails sx={{ pt: 0, pb: 2 }}>
 				<Divider sx={{ mb: 2 }} />
 				
 				{/* Detailed Scores */}
-				<Box sx={{ mb: 3 }}>
-					<Typography variant="subtitle2" gutterBottom color="text.secondary">
-						Score Breakdown
+				<Box sx={{ mb: 2 }}>
+					<Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: 'block' }}>
+						SCORE BREAKDOWN
 					</Typography>
-					<Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mt: 1 }}>
-						<Box>
-							<Typography variant="caption" color="text.secondary">
-								Similarity Score
+					<Box sx={{ 
+						display: 'grid', 
+						gridTemplateColumns: 'repeat(3, 1fr)',
+						gap: 1.5
+					}}>
+						<Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+							<Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+								Similarity
 							</Typography>
-							<Typography variant="h6" fontWeight="bold">
+							<Typography variant="h6" fontWeight="bold" color="primary">
 								{(candidate.similarity_score || 0).toFixed(1)}
 							</Typography>
-						</Box>
-						<Box>
-							<Typography variant="caption" color="text.secondary">
-								Must-Have Matches
+						</Paper>
+						<Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+							<Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+								Must-Have
 							</Typography>
-							<Typography variant="h6" fontWeight="bold">
+							<Typography variant="h6" fontWeight="bold" color="primary">
 								{Array.isArray(candidate.must_have_matches) 
 									? candidate.must_have_matches.length 
 									: 0}
 							</Typography>
-						</Box>
-						<Box>
-							<Typography variant="caption" color="text.secondary">
-								Recency Boost
+						</Paper>
+						<Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+							<Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+								Recency
 							</Typography>
-							<Typography variant="h6" fontWeight="bold">
+							<Typography variant="h6" fontWeight="bold" color="primary">
 								{(candidate.recency_boost || 0).toFixed(1)}
 							</Typography>
-						</Box>
+						</Paper>
 					</Box>
 				</Box>
 
 				{/* Candidate ID */}
-				<Box sx={{ mb: 2 }}>
-					<Typography variant="caption" color="text.secondary">
-						Candidate ID: {candidate.candidate_id}
-					</Typography>
-				</Box>
+				<Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2, fontSize: '0.7rem' }}>
+					ID: {candidate.candidate_id}
+				</Typography>
 
 				{/* Matched Requirements */}
 				{candidate.must_have_matches && candidate.must_have_matches.length > 0 && (
 					<Box sx={{ mb: 2 }}>
-						<Typography variant="subtitle2" gutterBottom>
-							Matched Must-Have Requirements:
+						<Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: 'block' }}>
+							MATCHED REQUIREMENTS
 						</Typography>
-						<List dense disablePadding>
+						<List dense disablePadding sx={{ 
+							bgcolor: 'success.50',
+							borderRadius: 1,
+							p: 1
+						}}>
 							{candidate.must_have_matches.map((req, idx) => (
-								<ListItem key={idx} sx={{ py: 0.5, px: 0 }}>
+								<ListItem key={idx} sx={{ py: 0.25, px: 0.5 }}>
 									<ListItemText 
 										primary={`✓ ${req}`}
-										primaryTypographyProps={{ variant: 'body2' }}
+										primaryTypographyProps={{ 
+											variant: 'body2',
+											fontSize: '0.8rem',
+											color: 'success.dark'
+										}}
 									/>
 								</ListItem>
 							))}
@@ -504,16 +632,17 @@ function CandidateCard({
 				{/* Reason Codes */}
 				{candidate.reason_codes && candidate.reason_codes.length > 0 && (
 					<Box>
-						<Typography variant="subtitle2" gutterBottom>
-							Analysis Reasons:
+						<Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: 'block' }}>
+							ANALYSIS REASONS
 						</Typography>
-						<Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
+						<Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5 }}>
 							{candidate.reason_codes.map((reason, idx) => (
 								<Chip
 									key={idx}
 									label={reason}
 									size="small"
 									variant="outlined"
+									sx={{ fontSize: '0.7rem', height: 24 }}
 								/>
 							))}
 						</Stack>
