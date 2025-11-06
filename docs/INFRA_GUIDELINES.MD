@@ -132,7 +132,8 @@ HackatonEquipoE/
 │   ├── storage/
 │   │   ├── __init__.py
 │   │   ├── storage_client.py     # Storage client abstraction
-│   │   └── local_storage.py      # Local filesystem storage
+│   │   ├── local_storage.py      # Local filesystem storage
+│   │   └── cache_manager.py      # Cache management for processed data
 │   ├── config.py                  # Configuration management
 │   └── main.py                   # Main application entry point
 ├── data/
@@ -145,6 +146,10 @@ HackatonEquipoE/
 │   ├── storage/                  # Storage for JSONs
 │   │   ├── resumes/              # Stored resume JSONs
 │   │   └── job_descriptions/     # Stored JD JSONs
+│   ├── cache/                    # Cache for processed data (LLM outputs, embeddings)
+│   │   ├── embeddings/           # Cached embeddings
+│   │   ├── llm_responses/        # Cached LLM analysis results
+│   │   └── scores/               # Cached scoring results
 │   └── output/                   # Generated CSV exports
 ├── prompts/                      # Centralized prompt definitions
 │   ├── scoring_prompts.yaml      # YAML format prompts (optional)
@@ -218,6 +223,14 @@ RECENCY_BOOST_WEIGHT=0.1
 # Storage Configuration
 STORAGE_TYPE=local  # Local filesystem storage only
 STORAGE_PATH=./data/storage  # Local path for storing JSONs
+
+# Cache Configuration
+ENABLE_CACHE=true  # Enable caching to avoid reprocessing
+CACHE_PATH=./data/cache  # Local path for caching processed data
+CACHE_EMBEDDINGS=true  # Cache embeddings
+CACHE_LLM_RESPONSES=true  # Cache LLM analysis responses
+CACHE_SCORES=true  # Cache scoring results
+CACHE_TTL=2592000  # Cache time-to-live in seconds (30 days default, 0 = no expiration)
 
 # Output Configuration
 OUTPUT_DIR=./data/output
@@ -464,6 +477,14 @@ class Config:
     # Output Configuration
     output_dir: str = os.getenv("OUTPUT_DIR", "./data/output")
     csv_encoding: str = os.getenv("CSV_ENCODING", "utf-8")
+    
+    # Cache Configuration (NEW - Cost Savings)
+    enable_cache: bool = os.getenv("ENABLE_CACHE", "true").lower() == "true"
+    cache_path: str = os.getenv("CACHE_PATH", "./data/cache")
+    cache_embeddings: bool = os.getenv("CACHE_EMBEDDINGS", "true").lower() == "true"
+    cache_llm_responses: bool = os.getenv("CACHE_LLM_RESPONSES", "true").lower() == "true"
+    cache_scores: bool = os.getenv("CACHE_SCORES", "true").lower() == "true"
+    cache_ttl: int = int(os.getenv("CACHE_TTL", "2592000"))  # 30 days default
     
     # Prompt Paths
     prompts_dir: str = os.getenv("PROMPTS_DIR", "./src/prompts")
@@ -1177,6 +1198,1152 @@ os.environ["LANGCHAIN_PROJECT"] = "ai-talent-matcher"
 # View in LangSmith dashboard for debugging and optimization
 ```
 
+## Data Persistence & Caching Strategy
+
+### Why Cache Processed Data?
+
+**Cost Savings:** LLM API calls are expensive. Reprocessing the same data costs money unnecessarily.
+
+**Performance:** Cached data loads instantly vs waiting for API responses.
+
+**User Experience:** Page reloads don't trigger reprocessing - data persists.
+
+**Single User PoC:** For this proof of concept, data is shared across all sessions (no per-user isolation).
+
+### What to Cache
+
+1. **Job Description Embeddings** - Once a JD is processed, cache its embeddings
+2. **Resume Embeddings** - Once a resume is processed, cache its embeddings
+3. **LLM Analysis Results** - Cache the structured output from LLM analysis
+4. **Scoring Results** - Cache final scores for resume-JD pairs
+5. **Parsed JSON** - Cache extracted/structured JSON from PDFs
+
+### Cache Key Strategy
+
+Use content-based hashing to identify unique data:
+
+```python
+import hashlib
+import json
+
+def generate_cache_key(data: dict | str, prefix: str = "") -> str:
+    """
+    Generate a deterministic cache key based on content.
+    
+    Args:
+        data: Dictionary or string content
+        prefix: Optional prefix (e.g., 'jd', 'resume', 'embedding')
+    
+    Returns:
+        Hash-based cache key
+    """
+    if isinstance(data, dict):
+        # Sort keys for deterministic hashing
+        content = json.dumps(data, sort_keys=True)
+    else:
+        content = str(data)
+    
+    # Generate SHA256 hash
+    hash_obj = hashlib.sha256(content.encode('utf-8'))
+    hash_hex = hash_obj.hexdigest()
+    
+    if prefix:
+        return f"{prefix}_{hash_hex}"
+    return hash_hex
+```
+
+### Cache Manager Implementation
+
+```python
+# src/storage/cache_manager.py
+from pathlib import Path
+from typing import Any, Optional
+import json
+import hashlib
+import time
+from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
+
+class CacheManager:
+    """
+    Manages caching of processed data to avoid reprocessing and save costs.
+    
+    Features:
+    - Content-based cache keys (hash of content)
+    - TTL support (optional expiration)
+    - Separate namespaces (embeddings, llm_responses, scores)
+    - Automatic cache directory creation
+    """
+    
+    def __init__(
+        self, 
+        cache_path: str = "./data/cache",
+        ttl: int = 0,  # 0 = no expiration
+        enabled: bool = True
+    ):
+        self.cache_path = Path(cache_path)
+        self.ttl = ttl
+        self.enabled = enabled
+        
+        if self.enabled:
+            # Create cache directories
+            self.embeddings_path = self.cache_path / "embeddings"
+            self.llm_responses_path = self.cache_path / "llm_responses"
+            self.scores_path = self.cache_path / "scores"
+            
+            for path in [self.embeddings_path, self.llm_responses_path, self.scores_path]:
+                path.mkdir(parents=True, exist_ok=True)
+    
+    def _generate_key(self, data: Any, prefix: str = "") -> str:
+        """Generate cache key from content."""
+        if isinstance(data, dict):
+            content = json.dumps(data, sort_keys=True)
+        else:
+            content = str(data)
+        
+        hash_obj = hashlib.sha256(content.encode('utf-8'))
+        hash_hex = hash_obj.hexdigest()
+        
+        return f"{prefix}_{hash_hex}" if prefix else hash_hex
+    
+    def _get_cache_file(self, namespace: str, key: str) -> Path:
+        """Get cache file path for namespace and key."""
+        if namespace == "embeddings":
+            return self.embeddings_path / f"{key}.json"
+        elif namespace == "llm_responses":
+            return self.llm_responses_path / f"{key}.json"
+        elif namespace == "scores":
+            return self.scores_path / f"{key}.json"
+        else:
+            raise ValueError(f"Unknown namespace: {namespace}")
+    
+    def _is_expired(self, cache_file: Path) -> bool:
+        """Check if cache file is expired based on TTL."""
+        if self.ttl == 0:
+            return False  # No expiration
+        
+        if not cache_file.exists():
+            return True
+        
+        file_mtime = cache_file.stat().st_mtime
+        current_time = time.time()
+        age = current_time - file_mtime
+        
+        return age > self.ttl
+    
+    def get(self, key: str, namespace: str = "llm_responses") -> Optional[dict]:
+        """
+        Retrieve cached data.
+        
+        Args:
+            key: Cache key
+            namespace: Cache namespace (embeddings, llm_responses, scores)
+        
+        Returns:
+            Cached data or None if not found/expired
+        """
+        if not self.enabled:
+            return None
+        
+        try:
+            cache_file = self._get_cache_file(namespace, key)
+            
+            if not cache_file.exists():
+                logger.debug(f"Cache miss: {key} in {namespace}")
+                return None
+            
+            if self._is_expired(cache_file):
+                logger.debug(f"Cache expired: {key} in {namespace}")
+                cache_file.unlink()  # Delete expired cache
+                return None
+            
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                cached_data = json.load(f)
+            
+            logger.info(f"Cache hit: {key} in {namespace}")
+            return cached_data.get("data")
+            
+        except Exception as e:
+            logger.error(f"Error reading cache: {e}")
+            return None
+    
+    def set(self, key: str, data: Any, namespace: str = "llm_responses") -> bool:
+        """
+        Store data in cache.
+        
+        Args:
+            key: Cache key
+            data: Data to cache (must be JSON serializable)
+            namespace: Cache namespace (embeddings, llm_responses, scores)
+        
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.enabled:
+            return False
+        
+        try:
+            cache_file = self._get_cache_file(namespace, key)
+            
+            cache_entry = {
+                "data": data,
+                "cached_at": datetime.now().isoformat(),
+                "key": key
+            }
+            
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(cache_entry, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"Cached data: {key} in {namespace}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error writing cache: {e}")
+            return False
+    
+    def get_or_compute(
+        self, 
+        key: str, 
+        compute_fn: callable,
+        namespace: str = "llm_responses",
+        **kwargs
+    ) -> Any:
+        """
+        Get from cache or compute and cache.
+        
+        Args:
+            key: Cache key
+            compute_fn: Function to compute data if not cached
+            namespace: Cache namespace
+            **kwargs: Arguments to pass to compute_fn
+        
+        Returns:
+            Cached or computed data
+        """
+        # Try to get from cache
+        cached = self.get(key, namespace)
+        if cached is not None:
+            return cached
+        
+        # Compute
+        logger.info(f"Computing data for key: {key}")
+        data = compute_fn(**kwargs)
+        
+        # Cache for future use
+        self.set(key, data, namespace)
+        
+        return data
+    
+    def generate_jd_key(self, job_description: dict) -> str:
+        """Generate cache key for job description."""
+        return self._generate_key(job_description, prefix="jd")
+    
+    def generate_resume_key(self, resume: dict) -> str:
+        """Generate cache key for resume."""
+        return self._generate_key(resume, prefix="resume")
+    
+    def generate_pair_key(self, resume: dict, job_description: dict) -> str:
+        """Generate cache key for resume-JD pair."""
+        pair_data = {
+            "resume": resume.get("candidate_id") or self.generate_resume_key(resume),
+            "jd": job_description.get("jd_id") or self.generate_jd_key(job_description)
+        }
+        return self._generate_key(pair_data, prefix="pair")
+    
+    def clear_namespace(self, namespace: str) -> int:
+        """
+        Clear all cache in a namespace.
+        
+        Args:
+            namespace: Cache namespace to clear
+        
+        Returns:
+            Number of files deleted
+        """
+        try:
+            if namespace == "embeddings":
+                path = self.embeddings_path
+            elif namespace == "llm_responses":
+                path = self.llm_responses_path
+            elif namespace == "scores":
+                path = self.scores_path
+            else:
+                raise ValueError(f"Unknown namespace: {namespace}")
+            
+            count = 0
+            for cache_file in path.glob("*.json"):
+                cache_file.unlink()
+                count += 1
+            
+            logger.info(f"Cleared {count} cache files from {namespace}")
+            return count
+            
+        except Exception as e:
+            logger.error(f"Error clearing cache: {e}")
+            return 0
+    
+    def clear_all(self) -> int:
+        """Clear all cached data."""
+        total = 0
+        total += self.clear_namespace("embeddings")
+        total += self.clear_namespace("llm_responses")
+        total += self.clear_namespace("scores")
+        return total
+    
+    def get_cache_stats(self) -> dict:
+        """Get cache statistics."""
+        stats = {
+            "embeddings_count": len(list(self.embeddings_path.glob("*.json"))),
+            "llm_responses_count": len(list(self.llm_responses_path.glob("*.json"))),
+            "scores_count": len(list(self.scores_path.glob("*.json"))),
+            "total_count": 0,
+            "total_size_mb": 0.0
+        }
+        
+        stats["total_count"] = (
+            stats["embeddings_count"] + 
+            stats["llm_responses_count"] + 
+            stats["scores_count"]
+        )
+        
+        # Calculate total size
+        total_size = 0
+        for path in [self.embeddings_path, self.llm_responses_path, self.scores_path]:
+            for cache_file in path.glob("*.json"):
+                total_size += cache_file.stat().st_size
+        
+        stats["total_size_mb"] = round(total_size / (1024 * 1024), 2)
+        
+        return stats
+```
+
+### Integration with LLM Analyzer
+
+```python
+# src/llm/analyzer.py - Updated with caching
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.pydantic_v1 import BaseModel, Field
+from src.llm.client import LLMClient
+from src.storage.cache_manager import CacheManager
+from typing import List
+import logging
+
+logger = logging.getLogger(__name__)
+
+class CandidateScore(BaseModel):
+    """Schema for candidate scoring output."""
+    overall_score: float = Field(description="Overall match score (0-100)")
+    similarity_score: float = Field(description="Semantic similarity score (0-100)")
+    must_have_matches: List[str] = Field(description="List of must-have requirements matched")
+    reason_codes: List[str] = Field(description="Reason codes explaining the match")
+    matched_sections: dict = Field(description="Mapping of requirements to resume sections")
+
+class ResumeAnalyzer:
+    """Analyzer with integrated caching to avoid reprocessing."""
+    
+    def __init__(self, llm_client: LLMClient, cache_manager: CacheManager):
+        self.llm_client = llm_client
+        self.cache_manager = cache_manager
+        self.parser = JsonOutputParser(pydantic_object=CandidateScore)
+        
+        self.scoring_template = ChatPromptTemplate.from_messages([
+            ("system", 
+             "You are an expert recruiter analyzing candidate resumes against job descriptions. "
+             "Provide detailed, objective analysis.\n\n"
+             "{format_instructions}"
+            ),
+            ("human",
+             "Job Description:\n{job_description}\n\n"
+             "Must-Have Requirements:\n{must_have_requirements}\n\n"
+             "Candidate Resume:\n{resume_text}\n\n"
+             "Please analyze and provide scoring details."
+            )
+        ])
+    
+    def score_candidate(
+        self, 
+        resume: dict, 
+        job_description: dict,
+        use_cache: bool = True
+    ) -> CandidateScore:
+        """
+        Score a candidate with caching support.
+        
+        Args:
+            resume: Resume dictionary
+            job_description: Job description dictionary
+            use_cache: Whether to use cached results (default: True)
+        
+        Returns:
+            CandidateScore object
+        """
+        # Generate cache key for this resume-JD pair
+        cache_key = self.cache_manager.generate_pair_key(resume, job_description)
+        
+        if use_cache:
+            # Try to get from cache
+            cached_score = self.cache_manager.get(cache_key, namespace="scores")
+            if cached_score is not None:
+                logger.info(f"Using cached score for {resume.get('candidate_id', 'unknown')}")
+                return CandidateScore(**cached_score)
+        
+        # Not in cache or cache disabled - compute
+        logger.info(f"Computing score for {resume.get('candidate_id', 'unknown')}")
+        
+        try:
+            chain = self.scoring_template | self.llm_client.llm | self.parser
+            
+            result = chain.invoke({
+                "job_description": job_description["description"],
+                "must_have_requirements": "\n".join(job_description["must_have_requirements"]),
+                "resume_text": resume["raw_text"],
+                "format_instructions": self.parser.get_format_instructions()
+            })
+            
+            # Cache the result
+            if use_cache:
+                self.cache_manager.set(cache_key, result, namespace="scores")
+            
+            logger.info(f"Scored candidate {resume.get('candidate_id', 'unknown')}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error scoring candidate: {e}")
+            raise
+    
+    def batch_score_candidates(
+        self, 
+        resumes: List[dict], 
+        job_description: dict,
+        use_cache: bool = True
+    ) -> List[CandidateScore]:
+        """
+        Score multiple candidates with caching.
+        
+        This method checks cache for each candidate individually,
+        then batch processes only the uncached ones.
+        """
+        results = []
+        uncached_resumes = []
+        uncached_indices = []
+        
+        # Check cache for each resume
+        for idx, resume in enumerate(resumes):
+            cache_key = self.cache_manager.generate_pair_key(resume, job_description)
+            
+            if use_cache:
+                cached_score = self.cache_manager.get(cache_key, namespace="scores")
+                if cached_score is not None:
+                    logger.info(f"Using cached score for {resume.get('candidate_id', 'unknown')}")
+                    results.append(CandidateScore(**cached_score))
+                    continue
+            
+            # Not cached - mark for processing
+            uncached_resumes.append(resume)
+            uncached_indices.append(idx)
+            results.append(None)  # Placeholder
+        
+        # Batch process uncached resumes
+        if uncached_resumes:
+            logger.info(f"Processing {len(uncached_resumes)} uncached candidates")
+            
+            chain = self.scoring_template | self.llm_client.llm | self.parser
+            
+            inputs = [
+                {
+                    "job_description": job_description["description"],
+                    "must_have_requirements": "\n".join(job_description["must_have_requirements"]),
+                    "resume_text": resume["raw_text"],
+                    "format_instructions": self.parser.get_format_instructions()
+                }
+                for resume in uncached_resumes
+            ]
+            
+            batch_results = chain.batch(inputs)
+            
+            # Cache and insert results
+            for resume, result, original_idx in zip(uncached_resumes, batch_results, uncached_indices):
+                if use_cache:
+                    cache_key = self.cache_manager.generate_pair_key(resume, job_description)
+                    self.cache_manager.set(cache_key, result, namespace="scores")
+                
+                results[original_idx] = result
+        
+        logger.info(f"Batch scored {len(resumes)} candidates ({len(uncached_resumes)} computed, {len(resumes) - len(uncached_resumes)} cached)")
+        return results
+```
+
+### Embeddings Caching
+
+```python
+# src/llm/embeddings.py
+from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from src.storage.cache_manager import CacheManager
+from typing import List
+import logging
+
+logger = logging.getLogger(__name__)
+
+class EmbeddingsManager:
+    """Manages embeddings generation with caching."""
+    
+    def __init__(self, provider: str, cache_manager: CacheManager, **kwargs):
+        self.cache_manager = cache_manager
+        
+        if provider == "openai":
+            self.embeddings = OpenAIEmbeddings(**kwargs)
+        elif provider == "gemini":
+            self.embeddings = GoogleGenerativeAIEmbeddings(**kwargs)
+        else:
+            raise ValueError(f"Unsupported embeddings provider: {provider}")
+    
+    def get_embedding(self, text: str, cache_key: str = None, use_cache: bool = True) -> List[float]:
+        """
+        Get embedding for text with caching.
+        
+        Args:
+            text: Text to embed
+            cache_key: Optional cache key (auto-generated if not provided)
+            use_cache: Whether to use cache
+        
+        Returns:
+            Embedding vector
+        """
+        if cache_key is None:
+            cache_key = self.cache_manager._generate_key(text, prefix="embed")
+        
+        if use_cache:
+            cached = self.cache_manager.get(cache_key, namespace="embeddings")
+            if cached is not None:
+                logger.info(f"Using cached embedding")
+                return cached
+        
+        # Generate embedding
+        logger.info(f"Generating new embedding")
+        embedding = self.embeddings.embed_query(text)
+        
+        # Cache it
+        if use_cache:
+            self.cache_manager.set(cache_key, embedding, namespace="embeddings")
+        
+        return embedding
+    
+    def get_embeddings_batch(
+        self, 
+        texts: List[str],
+        use_cache: bool = True
+    ) -> List[List[float]]:
+        """
+        Get embeddings for multiple texts with caching.
+        
+        This method checks cache individually, then batch processes uncached items.
+        """
+        results = []
+        uncached_texts = []
+        uncached_indices = []
+        
+        for idx, text in enumerate(texts):
+            cache_key = self.cache_manager._generate_key(text, prefix="embed")
+            
+            if use_cache:
+                cached = self.cache_manager.get(cache_key, namespace="embeddings")
+                if cached is not None:
+                    results.append(cached)
+                    continue
+            
+            uncached_texts.append(text)
+            uncached_indices.append(idx)
+            results.append(None)
+        
+        # Batch process uncached
+        if uncached_texts:
+            logger.info(f"Generating {len(uncached_texts)} new embeddings")
+            batch_embeddings = self.embeddings.embed_documents(uncached_texts)
+            
+            for text, embedding, idx in zip(uncached_texts, batch_embeddings, uncached_indices):
+                if use_cache:
+                    cache_key = self.cache_manager._generate_key(text, prefix="embed")
+                    self.cache_manager.set(cache_key, embedding, namespace="embeddings")
+                results[idx] = embedding
+        
+        return results
+    
+    def get_jd_embedding(self, job_description: dict, use_cache: bool = True) -> List[float]:
+        """Get embedding for job description with caching."""
+        cache_key = self.cache_manager.generate_jd_key(job_description)
+        text = job_description.get("description", "")
+        return self.get_embedding(text, cache_key=cache_key, use_cache=use_cache)
+    
+    def get_resume_embedding(self, resume: dict, use_cache: bool = True) -> List[float]:
+        """Get embedding for resume with caching."""
+        cache_key = self.cache_manager.generate_resume_key(resume)
+        text = resume.get("raw_text", "")
+        return self.get_embedding(text, cache_key=cache_key, use_cache=use_cache)
+```
+
+### Configuration Integration
+
+```python
+# src/config.py - Updated with cache configuration
+from dataclasses import dataclass
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+@dataclass
+class Config:
+    # ... existing LLM configuration ...
+    
+    # Cache Configuration
+    enable_cache: bool = os.getenv("ENABLE_CACHE", "true").lower() == "true"
+    cache_path: str = os.getenv("CACHE_PATH", "./data/cache")
+    cache_embeddings: bool = os.getenv("CACHE_EMBEDDINGS", "true").lower() == "true"
+    cache_llm_responses: bool = os.getenv("CACHE_LLM_RESPONSES", "true").lower() == "true"
+    cache_scores: bool = os.getenv("CACHE_SCORES", "true").lower() == "true"
+    cache_ttl: int = int(os.getenv("CACHE_TTL", "2592000"))  # 30 days
+```
+
+### Usage Example - Main Application
+
+```python
+# src/main.py
+from src.config import Config
+from src.storage.cache_manager import CacheManager
+from src.llm.client import LLMClient
+from src.llm.analyzer import ResumeAnalyzer
+from src.llm.embeddings import EmbeddingsManager
+import logging
+
+logger = logging.getLogger(__name__)
+
+def main():
+    # Load configuration
+    config = Config()
+    
+    # Initialize cache manager
+    cache_manager = CacheManager(
+        cache_path=config.cache_path,
+        ttl=config.cache_ttl,
+        enabled=config.enable_cache
+    )
+    
+    # Log cache stats
+    stats = cache_manager.get_cache_stats()
+    logger.info(f"Cache stats: {stats}")
+    
+    # Initialize LLM client and analyzer
+    llm_client = LLMClient(config)
+    analyzer = ResumeAnalyzer(llm_client, cache_manager)
+    
+    # Initialize embeddings manager
+    embeddings_manager = EmbeddingsManager(
+        provider=config.llm_provider,
+        cache_manager=cache_manager
+    )
+    
+    # Load job description (from storage or upload)
+    job_description = load_job_description()
+    
+    # Generate/retrieve JD embedding (cached automatically)
+    jd_embedding = embeddings_manager.get_jd_embedding(
+        job_description,
+        use_cache=config.cache_embeddings
+    )
+    logger.info("Job description embedding ready")
+    
+    # Load resumes
+    resumes = load_resumes()
+    
+    # Generate/retrieve resume embeddings (cached automatically)
+    for resume in resumes:
+        resume_embedding = embeddings_manager.get_resume_embedding(
+            resume,
+            use_cache=config.cache_embeddings
+        )
+    logger.info(f"All {len(resumes)} resume embeddings ready")
+    
+    # Score candidates (uses cache for previously scored pairs)
+    scores = analyzer.batch_score_candidates(
+        resumes,
+        job_description,
+        use_cache=config.cache_scores
+    )
+    
+    # Log final cache stats
+    final_stats = cache_manager.get_cache_stats()
+    logger.info(f"Final cache stats: {final_stats}")
+    logger.info(f"Cache saved approximately ${estimate_cost_savings(initial_stats, final_stats)}")
+    
+    return scores
+
+if __name__ == "__main__":
+    main()
+```
+
+### Cache Persistence Across Page Reloads
+
+For web applications, the cache persists on disk:
+
+1. **User uploads new JD** → Process and cache
+2. **User reloads page** → JD embedding/analysis loaded from cache (instant, free)
+3. **User uploads new resume** → Only new resume is processed, existing data from cache
+4. **User uploads same resume again** → Completely skipped (detected by content hash)
+
+### Cache Management API Endpoints
+
+```python
+# Backend API routes for cache management
+from fastapi import APIRouter, HTTPException
+from typing import Optional
+
+cache_router = APIRouter(prefix="/api/cache", tags=["cache"])
+
+@cache_router.get("/stats")
+def get_cache_stats():
+    """
+    Get cache statistics.
+    
+    Returns:
+        {
+            "embeddings_count": 45,
+            "llm_responses_count": 30,
+            "scores_count": 50,
+            "total_count": 125,
+            "total_size_mb": 2.5,
+            "estimated_savings_usd": 1.25
+        }
+    """
+    stats = cache_manager.get_cache_stats()
+    stats["estimated_savings_usd"] = estimate_cost_savings(stats)
+    return stats
+
+@cache_router.delete("/clear/{namespace}")
+def clear_cache_namespace(namespace: str):
+    """
+    Clear specific cache namespace.
+    
+    Args:
+        namespace: embeddings, llm_responses, or scores
+    """
+    if namespace not in ["embeddings", "llm_responses", "scores"]:
+        raise HTTPException(400, f"Invalid namespace: {namespace}")
+    
+    count = cache_manager.clear_namespace(namespace)
+    return {
+        "cleared": count,
+        "namespace": namespace,
+        "message": f"Cleared {count} items from {namespace}"
+    }
+
+@cache_router.delete("/clear")
+def clear_all_cache():
+    """Clear all cached data."""
+    count = cache_manager.clear_all()
+    return {
+        "cleared": count,
+        "message": f"Cleared all {count} cached items"
+    }
+
+@cache_router.get("/check/{resume_id}/{jd_id}")
+def check_cache_exists(resume_id: str, jd_id: str):
+    """
+    Check if score exists in cache for resume-JD pair.
+    
+    Returns:
+        {
+            "cached": true,
+            "namespace": "scores",
+            "cache_key": "pair_abc123...",
+            "cached_at": "2025-11-06T10:30:00"
+        }
+    """
+    # Generate cache key
+    pair_data = {"resume": resume_id, "jd": jd_id}
+    cache_key = cache_manager._generate_key(pair_data, prefix="pair")
+    
+    # Check existence
+    cached_data = cache_manager.get(cache_key, namespace="scores")
+    
+    if cached_data:
+        cache_file = cache_manager._get_cache_file("scores", cache_key)
+        with open(cache_file, 'r') as f:
+            metadata = json.load(f)
+        
+        return {
+            "cached": True,
+            "namespace": "scores",
+            "cache_key": cache_key,
+            "cached_at": metadata.get("cached_at"),
+            "data": cached_data
+        }
+    else:
+        return {
+            "cached": False,
+            "cache_key": cache_key,
+            "message": "Not found in cache"
+        }
+
+@cache_router.get("/hit-rate")
+def get_cache_hit_rate():
+    """
+    Get cache hit rate statistics (requires tracking in application).
+    
+    Returns:
+        {
+            "embeddings_hit_rate": 0.85,
+            "scores_hit_rate": 0.92,
+            "overall_hit_rate": 0.88
+        }
+    """
+    # This requires implementing hit/miss tracking in CacheManager
+    # For now, return placeholder
+    return {
+        "message": "Implement hit rate tracking in CacheManager",
+        "tip": "Add hit/miss counters to track cache effectiveness"
+    }
+```
+
+### Cache Monitoring and Debugging
+
+#### Logging Cache Operations
+
+```python
+# Add detailed logging to track cache behavior
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('cache.log'),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger('cache')
+
+# Example log output:
+# 2025-11-06 10:30:00 - cache - INFO - Cache hit: jd_abc123 in embeddings
+# 2025-11-06 10:30:01 - cache - INFO - Cache miss: resume_def456 in embeddings
+# 2025-11-06 10:30:01 - cache - INFO - Generating new embedding
+# 2025-11-06 10:30:02 - cache - INFO - Cached data: resume_def456 in embeddings
+```
+
+#### Cache Dashboard (Frontend)
+
+```typescript
+// Frontend component to display cache statistics
+interface CacheStats {
+  embeddings_count: number;
+  llm_responses_count: number;
+  scores_count: number;
+  total_count: number;
+  total_size_mb: number;
+  estimated_savings_usd: number;
+}
+
+function CacheDashboard() {
+  const [stats, setStats] = useState<CacheStats | null>(null);
+  
+  useEffect(() => {
+    fetch('/api/cache/stats')
+      .then(res => res.json())
+      .then(data => setStats(data));
+  }, []);
+  
+  return (
+    <div className="cache-dashboard">
+      <h3>Cache Statistics</h3>
+      <div className="stats-grid">
+        <Stat label="Embeddings Cached" value={stats?.embeddings_count} />
+        <Stat label="Scores Cached" value={stats?.scores_count} />
+        <Stat label="Total Items" value={stats?.total_count} />
+        <Stat label="Cache Size" value={`${stats?.total_size_mb} MB`} />
+        <Stat 
+          label="Estimated Savings" 
+          value={`$${stats?.estimated_savings_usd?.toFixed(2)}`}
+          highlight={true}
+        />
+      </div>
+      <button onClick={clearCache}>Clear Cache</button>
+    </div>
+  );
+}
+```
+
+#### Debugging Cache Issues
+
+**Problem: Cache not being used**
+```python
+# Check if cache is enabled
+print(f"Cache enabled: {config.enable_cache}")
+
+# Check cache directory exists
+print(f"Cache path exists: {Path(config.cache_path).exists()}")
+
+# Check cache stats
+stats = cache_manager.get_cache_stats()
+print(f"Cache stats: {stats}")
+
+# Verify cache key generation
+test_key = cache_manager._generate_key({"test": "data"})
+print(f"Generated key: {test_key}")
+```
+
+**Problem: Cache hit expected but miss occurring**
+```python
+# Log cache key being used
+logger.info(f"Looking for cache key: {cache_key}")
+
+# Check if file exists
+cache_file = cache_manager._get_cache_file(namespace, cache_key)
+logger.info(f"Cache file path: {cache_file}")
+logger.info(f"File exists: {cache_file.exists()}")
+
+# Check if expired
+if cache_file.exists():
+    is_expired = cache_manager._is_expired(cache_file)
+    logger.info(f"Cache expired: {is_expired}")
+```
+
+**Problem: High cache size**
+```python
+# Analyze cache size by namespace
+for namespace in ["embeddings", "llm_responses", "scores"]:
+    path = cache_manager.cache_path / namespace
+    total_size = sum(f.stat().st_size for f in path.glob("*.json"))
+    count = len(list(path.glob("*.json")))
+    avg_size = total_size / count if count > 0 else 0
+    
+    print(f"{namespace}:")
+    print(f"  Count: {count}")
+    print(f"  Total size: {total_size / 1024 / 1024:.2f} MB")
+    print(f"  Avg size: {avg_size / 1024:.2f} KB")
+
+# Clear old cache if needed
+cache_manager.clear_namespace("llm_responses")  # Most likely to be outdated
+```
+
+#### Performance Monitoring
+
+```python
+import time
+from functools import wraps
+
+def measure_cache_performance(func):
+    """Decorator to measure cache performance."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        elapsed = time.time() - start
+        
+        # Log performance
+        logger.info(f"{func.__name__} took {elapsed:.3f}s")
+        
+        return result
+    return wrapper
+
+# Usage
+@measure_cache_performance
+def score_candidate(resume, jd):
+    return analyzer.score_candidate(resume, jd, use_cache=True)
+
+# Output:
+# score_candidate took 0.002s (cache hit)
+# score_candidate took 2.450s (cache miss, API call)
+```
+
+
+### Dual Caching Strategy
+
+This application uses **two layers of caching** for maximum cost savings:
+
+#### Layer 1: LangChain Built-in Cache (Session-Level)
+```python
+from langchain.cache import SQLiteCache
+from langchain.globals import set_llm_cache
+
+# Enable LangChain's built-in caching
+set_llm_cache(SQLiteCache(database_path=".langchain.db"))
+```
+
+**Benefits:**
+- Caches raw LLM API responses
+- Works at the LangChain level (prompt + response)
+- Fast in-memory or SQLite storage
+- Automatic cache key generation based on prompt
+
+**Limitations:**
+- May not persist across application restarts (depending on configuration)
+- Caches at prompt level, not semantic level
+
+#### Layer 2: CacheManager (Application-Level)
+```python
+cache_manager = CacheManager(cache_path="./data/cache", enabled=True)
+```
+
+**Benefits:**
+- Persists across page reloads and application restarts
+- Content-based hashing (detects identical content regardless of format)
+- Namespace separation (embeddings, scores, llm_responses)
+- TTL support for expiration
+- Detailed statistics and monitoring
+
+**Use Cases:**
+- Cache embeddings for documents
+- Cache scoring results for resume-JD pairs
+- Cache structured analysis outputs
+- Persist data across sessions
+
+#### Why Both?
+
+1. **LangChain Cache** catches repeated identical prompts within a session
+2. **CacheManager** catches repeated processing across sessions and page reloads
+3. **Together** they provide comprehensive coverage:
+   - Short-term: LangChain cache (fast lookup)
+   - Long-term: CacheManager (persistent storage)
+
+#### Cache Flow Example
+
+```
+User uploads same JD twice:
+1st time: API call → LangChain cache miss → CacheManager miss → Process → Cache both layers
+2nd time (same session): LangChain cache HIT → Return instantly (no CacheManager check)
+3rd time (new session): LangChain cache miss → CacheManager HIT → Return from disk
+
+User reloads page after processing 10 resumes:
+- All 10 resume embeddings: CacheManager HIT (instant, $0)
+- All 10 scores: CacheManager HIT (instant, $0)
+- Total saved: ~$0.10-$1.00 depending on model
+```
+
+### Cache Invalidation Strategy
+
+**When to invalidate cache:**
+
+1. **Content changes** - Automatic (content-based hash changes)
+2. **Prompt template updates** - Clear `llm_responses` and `scores` namespaces
+3. **Model changes** - Clear all caches (different models = different outputs)
+4. **Manual cleanup** - Use API endpoints or cache_manager.clear_all()
+
+**TTL-based expiration:**
+- Set `CACHE_TTL=2592000` (30 days) for general use
+- Set `CACHE_TTL=0` for no expiration (PoC recommended)
+- Set `CACHE_TTL=86400` (1 day) for testing
+
+```python
+# Clear cache when changing prompts or models
+if prompt_changed or model_changed:
+    cache_manager.clear_namespace("llm_responses")
+    cache_manager.clear_namespace("scores")
+    # Keep embeddings - they don't depend on prompts/models
+```
+
+### Real-World Caching Scenario
+
+**Scenario:** HR manager analyzing candidates for a position
+
+#### Session 1: Initial Processing
+```
+1. Upload Job Description "Senior Python Developer"
+   - Generate JD embedding → $0.0001 → CACHED
+   - Total: $0.0001
+
+2. Upload 20 resumes
+   - Generate 20 resume embeddings → 20 × $0.0001 = $0.002 → CACHED
+   - Analyze 20 candidates → 20 × $0.01 = $0.20 → CACHED
+   - Total: $0.202
+
+Session 1 Total Cost: $0.202
+Cached Items: 1 JD embedding, 20 resume embeddings, 20 scores
+```
+
+#### Session 2: User Reloads Page (Same Day)
+```
+1. Load Job Description "Senior Python Developer"
+   - JD embedding from cache → $0 (SAVED $0.0001)
+
+2. Display 20 previously analyzed resumes
+   - 20 resume embeddings from cache → $0 (SAVED $0.002)
+   - 20 scores from cache → $0 (SAVED $0.20)
+   
+Session 2 Total Cost: $0 (SAVED $0.202)
+```
+
+#### Session 3: Add 5 New Resumes
+```
+1. Load Job Description "Senior Python Developer"
+   - JD embedding from cache → $0 (SAVED $0.0001)
+
+2. Load 20 previous resumes
+   - 20 resume embeddings from cache → $0 (SAVED $0.002)
+   - 20 scores from cache → $0 (SAVED $0.20)
+
+3. Process 5 new resumes
+   - Generate 5 resume embeddings → 5 × $0.0001 = $0.0005 → CACHED
+   - Analyze 5 candidates → 5 × $0.01 = $0.05 → CACHED
+   
+Session 3 Total Cost: $0.0505 (SAVED $0.202)
+```
+
+#### Session 4: Duplicate Upload Detection
+```
+1. User accidentally uploads same resume again
+   - Content hash matches existing cache → $0 (SAVED $0.011)
+   - System shows "Resume already processed" message
+   
+Session 4 Total Cost: $0 (SAVED $0.011)
+```
+
+#### Month Summary (30 days, daily usage)
+```
+Without caching:
+- Daily re-analysis: 25 candidates × $0.011 × 30 days = $8.25
+
+With caching:
+- Initial processing: $0.252 (Day 1)
+- New candidates: 5 × $0.011 × 5 days = $0.275
+- Total: $0.527
+
+Savings: $8.25 - $0.527 = $7.72 (94% cost reduction)
+```
+
+### Cost Savings Estimation
+
+```python
+def estimate_cost_savings(cache_stats: dict) -> float:
+    """
+    Estimate cost savings from caching.
+    
+    Assumptions:
+    - Embedding: $0.0001 per 1K tokens (~750 words)
+    - LLM analysis: $0.01 per request (GPT-4)
+    - Average resume: 500 words
+    - Average JD: 200 words
+    """
+    embeddings_saved = cache_stats["embeddings_count"]
+    llm_responses_saved = cache_stats["llm_responses_count"]
+    scores_saved = cache_stats["scores_count"]
+    
+    embedding_cost_per_item = 0.0001  # $0.0001 per embedding
+    llm_cost_per_request = 0.01  # $0.01 per LLM analysis
+    
+    total_savings = (
+        (embeddings_saved * embedding_cost_per_item) +
+        (llm_responses_saved * llm_cost_per_request) +
+        (scores_saved * llm_cost_per_request)
+    )
+    
+    return round(total_savings, 2)
+```
+
 ## Storage Integration Example
 
 ### Storage Client Abstraction
@@ -1350,7 +2517,6 @@ The frontend should be a modern, user-friendly, and intuitive web interface buil
 
 #### Recommended Frontend Framework
 - **Framework:** React 18+ with TypeScript (recommended) or Vue.js 3+
-- **Alternative:** Next.js 14+ for full-stack capabilities with server-side rendering
 - **Build Tool:** Vite 5+ for fast development and optimized builds
 - **Styling:** 
   - Tailwind CSS 3+ for utility-first styling
@@ -2001,14 +3167,19 @@ llm = create_llm(os.getenv("LLM_PROVIDER", "openai"), temperature=0.3)
 ### Best Practices
 1. **Always use LangChain abstractions** - Don't import `openai`, `google.generativeai`, etc. directly
 2. **Use Pydantic for structured outputs** - Type safety and validation
-3. **Enable caching** - Significant cost savings
-4. **Use batch processing** - More efficient than sequential
-5. **Monitor with callbacks** - Track tokens and costs
-6. **Use async for concurrency** - Better performance for multiple requests
-7. **Implement fallbacks** - Graceful degradation if LLM fails
-8. **Version your prompts** - Track prompt changes in git
-9. **Test with multiple providers** - Ensure portability
-10. **Use LangSmith** - Debugging and optimization
+3. **Enable dual caching layers** - Both LangChain cache and CacheManager for maximum savings
+4. **Use content-based cache keys** - Hash content to detect duplicates automatically
+5. **Cache embeddings aggressively** - Embeddings rarely change and are expensive
+6. **Cache LLM responses** - Single most expensive operation to cache
+7. **Use batch processing** - More efficient than sequential
+8. **Monitor with callbacks** - Track tokens and costs
+9. **Use async for concurrency** - Better performance for multiple requests
+10. **Implement fallbacks** - Graceful degradation if LLM fails
+11. **Version your prompts** - Track prompt changes in git
+12. **Test with multiple providers** - Ensure portability
+13. **Monitor cache hit rates** - Optimize based on actual usage patterns
+14. **Set appropriate TTL** - Balance between freshness and cost savings
+15. **Use LangSmith** - Debugging and optimization
 
 ## Quick Start Checklist
 
@@ -2020,17 +3191,26 @@ llm = create_llm(os.getenv("LLM_PROVIDER", "openai"), temperature=0.3)
 - [ ] Configure `.env` file with LLM provider and API keys
   - Set `LLM_PROVIDER` (openai, gemini, anthropic, or ollama)
   - Set corresponding API key (`OPENAI_API_KEY`, `GOOGLE_API_KEY`, etc.)
-- [ ] Create project directory structure (including `src/llm/`, `src/prompts/`)
+  - Set `ENABLE_CACHE=true` to enable cost-saving cache
+  - Set `CACHE_PATH=./data/cache` for cache storage location
+- [ ] Create project directory structure (including `src/llm/`, `src/prompts/`, `src/storage/`)
+- [ ] Create cache directories (`data/cache/embeddings/`, `data/cache/llm_responses/`, `data/cache/scores/`)
+- [ ] Initialize `CacheManager` for persistent data storage
 - [ ] Initialize LangChain LLM client with provider configuration
 - [ ] Create LangChain prompt templates using `ChatPromptTemplate`
 - [ ] Set up Pydantic models for structured output
-- [ ] Configure LangChain caching (`InMemoryCache` or `SQLiteCache`)
+- [ ] Configure LangChain caching (`InMemoryCache` or `SQLiteCache`) for LangChain-level caching
+- [ ] Integrate `CacheManager` with `ResumeAnalyzer` for score caching
+- [ ] Set up `EmbeddingsManager` with caching support
 - [ ] Place sample resume PDF files in `data/resumes/raw/`
 - [ ] Place sample JD PDF files in `data/job_descriptions/raw/`
 - [ ] Test PDF extraction with sample files
 - [ ] Test LangChain LLM connection with a simple chain
 - [ ] Verify JSON output parsing with `JsonOutputParser`
 - [ ] Test batch processing with `chain.batch()`
+- [ ] Test cache persistence (process data, reload app, verify cached data is used)
+- [ ] Verify new data triggers processing while existing data uses cache
+- [ ] Monitor cache statistics and cost savings
 - [ ] (Optional) Set up LangSmith for observability
 
 ### Frontend Setup (if building web interface)
