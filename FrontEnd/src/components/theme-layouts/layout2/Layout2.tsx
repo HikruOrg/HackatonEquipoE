@@ -10,7 +10,6 @@ import LeftSideLayout2 from './components/LeftSideLayout2';
 import NavbarWrapperLayout2 from './components/NavbarWrapperLayout2';
 import RightSideLayout2 from './components/RightSideLayout2';
 import ToolbarLayout2 from './components/ToolbarLayout2';
-import Configurator from '../components/configurator/Configurator';
 
 const Root = styled('div')(({ config }: { config: Layout2ConfigDefaultsType }) => ({
 	...(config.mode === 'boxed' && {
@@ -77,10 +76,6 @@ function Layout2(props: Layout2Props) {
 							)}
 						/>
 					)}
-
-					<div className="sticky top-0 z-99">
-						<Configurator />
-					</div>
 
 					<div className="relative z-10 flex min-h-0 flex-auto flex-col">
 						<FuseSuspense>

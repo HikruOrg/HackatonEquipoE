@@ -44,33 +44,6 @@ function NotificationPanel() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [pathname]);
 
-	useEffect(() => {
-		const item = NotificationModel({
-			title: 'New Fuse React version is released! ',
-			description: ' Checkout the release notes for more information. 🚀 ',
-			link: '/documentation/changelog',
-			icon: 'lucide:flame',
-			variant: 'secondary'
-		});
-
-		setTimeout(() => {
-			addNotification(item);
-
-			enqueueSnackbar(item.title, {
-				key: item.id,
-				autoHideDuration: 6000,
-				content: (
-					<NotificationTemplate
-						item={item}
-						onClose={() => {
-							closeSnackbar(item.id);
-						}}
-					/>
-				)
-			});
-		}, 2000);
-	}, [addNotification, closeSnackbar, enqueueSnackbar]);
-
 	function handleClose() {
 		close();
 	}

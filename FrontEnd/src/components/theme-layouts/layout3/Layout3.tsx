@@ -1,7 +1,6 @@
 import { styled } from '@mui/material/styles';
 import clsx from 'clsx';
 import { memo, ReactNode } from 'react';
-import Configurator from 'src/components/theme-layouts/components/configurator/Configurator';
 import useFuseLayoutSettings from '@fuse/core/FuseLayout/useFuseLayoutSettings';
 import FuseSuspense from '@fuse/core/FuseSuspense';
 import { Outlet } from 'react-router';
@@ -77,10 +76,6 @@ function Layout3(props: Layout3Props) {
 							)}
 						/>
 					)}
-
-					<div className="sticky top-0 z-99">
-						<Configurator />
-					</div>
 
 					<div className="relative z-10 flex min-h-0 flex-auto flex-col">
 						<FuseSuspense>

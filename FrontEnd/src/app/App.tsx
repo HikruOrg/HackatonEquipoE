@@ -9,7 +9,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import ErrorBoundary from '@fuse/utils/ErrorBoundary';
 import Authentication from '@auth/Authentication';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import MainThemeProvider from '../contexts/MainThemeProvider';
 import routes from '@/configs/routesConfig';
 import AppContext from '@/contexts/AppContext';
@@ -81,7 +80,6 @@ function App() {
 								</I18nProvider>
 							</FuseSettingsProvider>
 						</Authentication>
-						<ReactQueryDevtools initialIsOpen={false} />
 					</QueryClientProvider>
 				</LocalizationProvider>
 			</AppContext>
