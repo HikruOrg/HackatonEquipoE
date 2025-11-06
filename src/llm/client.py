@@ -100,16 +100,24 @@ class LLMClient:
                 ("human", "{input}")
             ])
             
-            # Create chain
+            # First get raw response
+            raw_chain = prompt_template | self.llm | self.str_parser
+            raw_response = raw_chain.invoke({"input": prompt})
+            logger.info(f"Raw LLM response: {raw_response[:500]}...")  # Log first 500 chars
+            
+            # Now parse if needed
             if parse_json:
-                chain = prompt_template | self.llm | self.json_parser
+                try:
+                    # Try to parse the raw response
+                    import json
+                    result = json.loads(raw_response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse JSON. Raw response: {raw_response}")
+                    raise ValueError(f"Invalid JSON response from LLM: {str(e)}")
             else:
-                chain = prompt_template | self.llm | self.str_parser
+                result = raw_response
             
-            # Invoke chain
-            result = chain.invoke({"input": prompt})
-            
-            logger.debug(f"LLM response received: {type(result)}")
+            logger.debug(f"LLM response parsed: {type(result)}")
             return result
             
         except Exception as e:
@@ -129,16 +137,24 @@ class LLMClient:
             Parsed JSON dict or raw string response
         """
         try:
-            # Create chain
+            # First get raw response
+            raw_chain = template | self.llm | self.str_parser
+            raw_response = raw_chain.invoke(variables)
+            logger.info(f"Raw LLM response (template): {raw_response[:500]}...")  # Log first 500 chars
+            
+            # Now parse if needed
             if parse_json:
-                chain = template | self.llm | self.json_parser
+                try:
+                    # Try to parse the raw response
+                    import json
+                    result = json.loads(raw_response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse JSON. Raw response: {raw_response}")
+                    raise ValueError(f"Invalid JSON response from LLM: {str(e)}")
             else:
-                chain = template | self.llm | self.str_parser
+                result = raw_response
             
-            # Invoke chain
-            result = chain.invoke(variables)
-            
-            logger.debug(f"LLM response received: {type(result)}")
+            logger.debug(f"LLM response parsed: {type(result)}")
             return result
             
         except Exception as e:

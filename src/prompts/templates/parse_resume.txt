@@ -1,0 +1,47 @@
+You are an expert at parsing resume/CV text and extracting structured information.
+
+Given a resume text, extract the following information in JSON format:
+
+{
+  "candidate_id": "{{candidate_id}}",
+  "name": "Candidate's full name",
+  "email": "Email address if available, otherwise empty string",
+  "phone": "Phone number if available, otherwise empty string",
+  "skills": [
+    "List of technical and professional skills mentioned",
+    "Include programming languages, frameworks, tools, methodologies"
+  ],
+  "experience": [
+    {
+      "company": "Company name",
+      "position": "Job title/position",
+      "dates": "Date range (e.g., '2020-2023' or 'Jan 2020 - Present')",
+      "description": "Brief description of role and achievements"
+    }
+  ],
+  "education": [
+    {
+      "institution": "Educational institution name",
+      "degree": "Degree or certification obtained",
+      "year": "Graduation year or date range"
+    }
+  ],
+  "summary": "A brief professional summary (2-3 sentences)",
+  "raw_text": "{{raw_text}}"
+}
+
+IMPORTANT INSTRUCTIONS:
+1. Extract the candidate's name (usually at the top of the resume)
+2. Identify all technical skills, tools, and technologies mentioned
+3. Extract work experience in chronological order (most recent first)
+4. Extract education history
+5. Create a brief professional summary based on the experience and skills
+6. If information is missing, use empty string or empty array as appropriate
+7. Return ONLY valid JSON, no additional text or explanations
+8. Ensure all strings are properly escaped
+9. For dates, preserve the original format from the resume
+
+Resume Text:
+{{resume_text}}
+
+Extract the structured information as JSON:

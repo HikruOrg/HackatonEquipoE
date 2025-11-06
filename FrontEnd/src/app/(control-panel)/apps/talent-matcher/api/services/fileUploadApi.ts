@@ -3,35 +3,35 @@ import type { UploadedFile, FileValidationResult, Resume, JobDescription } from 
 
 export const fileUploadApi = {
 	/**
-	 * Upload a file (PDF or JSON) for processing
+	 * Upload resume files (PDF, JSON, or TXT) for processing
 	 */
-	uploadFile: async (file: File): Promise<UploadedFile> => {
-		const formData = new FormData();
-		formData.append('file', file);
-
-		const response = await api
-			.post('talent-matcher/files/upload', {
-				body: formData
-			})
-			.json<UploadedFile>();
-
-		return response;
-	},
-
-	/**
-	 * Upload multiple files at once
-	 */
-	uploadFiles: async (files: File[]): Promise<UploadedFile[]> => {
+	uploadResumes: async (files: File[]): Promise<{ uploaded: number; files: Array<{ filename: string; resume_id: string; type: string; status: string }>; errors: string[] }> => {
 		const formData = new FormData();
 		files.forEach((file) => {
 			formData.append('files', file);
 		});
 
 		const response = await api
-			.post('talent-matcher/files/upload-multiple', {
+			.post('upload/resumes', {
 				body: formData
 			})
-			.json<UploadedFile[]>();
+			.json<{ uploaded: number; files: Array<{ filename: string; resume_id: string; type: string; status: string }>; errors: string[] }>();
+
+		return response;
+	},
+
+	/**
+	 * Upload job description file (PDF, JSON, or TXT)
+	 */
+	uploadJobDescription: async (file: File): Promise<{ filename: string; jd_id: string; type: string; status: string }> => {
+		const formData = new FormData();
+		formData.append('file', file);
+
+		const response = await api
+			.post('upload/job-description', {
+				body: formData
+			})
+			.json<{ filename: string; jd_id: string; type: string; status: string }>();
 
 		return response;
 	},
@@ -53,7 +53,7 @@ export const fileUploadApi = {
 	},
 
 	/**
-	 * Extract text from PDF
+	 * Extract text from PDF or TXT
 	 */
 	extractPdfText: async (fileId: string): Promise<{ text: string; pages: number }> => {
 		const response = await api
@@ -64,7 +64,7 @@ export const fileUploadApi = {
 	},
 
 	/**
-	 * Parse PDF text to structured JSON (Resume or JD)
+	 * Parse PDF or TXT text to structured JSON (Resume or JD)
 	 */
 	parsePdfToJson: async (
 		fileId: string,

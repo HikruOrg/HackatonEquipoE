@@ -2,13 +2,14 @@
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import hashlib
 
 from src.config import config
 from src.pdf_processing import PDFExtractor, PDFValidator
 from src.preprocessing import ResumeParser, JDParser
 from src.storage import LocalStorage
+from src.llm import LLMClient
 
 logger = logging.getLogger(__name__)
 
@@ -16,12 +17,26 @@ logger = logging.getLogger(__name__)
 class AutoProcessor:
     """Automatically process raw files on startup."""
     
-    def __init__(self):
-        """Initialize auto processor."""
+    def __init__(self, llm_client: Optional[LLMClient] = None):
+        """
+        Initialize auto processor.
+        
+        Args:
+            llm_client: Optional LLM client for intelligent parsing
+        """
         self.pdf_extractor = PDFExtractor(require_pdfplumber=False)
         self.pdf_validator = PDFValidator()
-        self.resume_parser = ResumeParser()
-        self.jd_parser = JDParser()
+        
+        # Initialize parsers with LLM support if available
+        if llm_client:
+            self.resume_parser = ResumeParser(use_llm=True, llm_client=llm_client)
+            self.jd_parser = JDParser(use_llm=True, llm_client=llm_client)
+            logger.info("AutoProcessor initialized with LLM-based parsing")
+        else:
+            self.resume_parser = ResumeParser()
+            self.jd_parser = JDParser()
+            logger.info("AutoProcessor initialized with rule-based parsing")
+        
         self.storage = LocalStorage()
         
         # Track processed files

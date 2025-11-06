@@ -11,14 +11,15 @@ export const MAX_RESUME_FILES = 50;
 /**
  * Supported file types
  */
-export const SUPPORTED_FILE_TYPES = ['application/pdf', 'application/json', 'text/json'] as const;
+export const SUPPORTED_FILE_TYPES = ['application/pdf', 'application/json', 'text/json', 'text/plain'] as const;
 
 /**
  * File type extensions
  */
 export const FILE_EXTENSIONS = {
 	pdf: ['.pdf'],
-	json: ['.json']
+	json: ['.json'],
+	txt: ['.txt']
 } as const;
 
 /**

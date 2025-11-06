@@ -31,10 +31,9 @@ export type AnalysisResponse = {
 
 export type ProcessingStatus = {
 	status: 'idle' | 'processing' | 'completed' | 'error';
-	current_candidate: number;
-	total_candidates: number;
-	progress_percentage: number;
-	estimated_time_remaining?: number;
-	error_message?: string;
+	progress: number; // Current number of processed items
+	total: number; // Total number of items to process
+	results: AnalysisResult[];
+	errors: any[];
 };
 

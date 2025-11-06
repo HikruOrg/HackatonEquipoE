@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict
 import json
 import logging
+import os
 from pathlib import Path
 import tempfile
 import shutil
@@ -69,8 +70,8 @@ storage = LocalStorage()
 csv_exporter = CSVExporter()
 pdf_extractor = PDFExtractor(require_pdfplumber=False)  # Allow TXT extraction without pdfplumber
 pdf_validator = PDFValidator()
-resume_parser = ResumeParser()
-jd_parser = JDParser()
+resume_parser = ResumeParser(use_llm=True, llm_client=llm_client) if llm_client else ResumeParser()
+jd_parser = JDParser(use_llm=True, llm_client=llm_client) if llm_client else JDParser()
 
 # Processing state
 processing_state = {
@@ -89,7 +90,7 @@ async def startup_event():
     
     # Auto-process raw files
     try:
-        auto_processor = AutoProcessor()
+        auto_processor = AutoProcessor(llm_client=llm_client)
         auto_processor.process_all()
     except Exception as e:
         logger.error(f"Error during auto-processing: {e}")
@@ -105,7 +106,7 @@ async def root():
 
 @app.post("/api/upload/resumes")
 async def upload_resumes(files: List[UploadFile] = File(...)):
-    """Upload resume files (PDF, JSON, or TXT)."""
+    """Upload resume files (PDF, JSON, or TXT) and save to storage."""
     uploaded_files = []
     errors = []
     
@@ -118,6 +119,7 @@ async def upload_resumes(files: List[UploadFile] = File(...)):
                 tmp_path = tmp_file.name
             
             # Validate file
+            file_type = None
             if pdf_validator.is_pdf(tmp_path):
                 is_valid, error = pdf_validator.validate_pdf(tmp_path)
                 if not is_valid:
@@ -140,13 +142,75 @@ async def upload_resumes(files: List[UploadFile] = File(...)):
                 errors.append(f"{file.filename}: Unsupported file type")
                 continue
             
+            # Process and save to storage immediately
+            logger.info(f"Processing uploaded resume file: {file.filename} ({file_type})")
+            
+            # Extract text from file
+            text_content = None
+            if file_type == "pdf":
+                try:
+                    text_content = pdf_extractor.extract_text(tmp_path)
+                except Exception as pdf_error:
+                    logger.error(f"Failed to extract PDF text: {pdf_error}")
+                    # Fallback: try reading as text file
+                    logger.info("Attempting to read PDF as text file...")
+                    try:
+                        with open(tmp_path, 'r', encoding='utf-8', errors='ignore') as f:
+                            text_content = f.read()
+                    except Exception as txt_error:
+                        logger.error(f"Failed to read as text: {txt_error}")
+                        errors.append(f"{file.filename}: Could not extract text from PDF")
+                        continue
+            elif file_type == "json":
+                with open(tmp_path, 'r', encoding='utf-8') as f:
+                    json_data = json.load(f)
+                    # If it's already structured, save it directly
+                    storage.save_resume(json_data)
+                    resume_id = json_data.get("candidate_id", "unknown")
+                    logger.info(f"Saved JSON resume to storage with ID: {resume_id}")
+                    uploaded_files.append({
+                        "filename": file.filename,
+                        "resume_id": resume_id,
+                        "type": file_type,
+                        "status": "saved"
+                    })
+                    # Clean up temp file
+                    try:
+                        os.unlink(tmp_path)
+                    except Exception as e:
+                        logger.warning(f"Failed to delete temp file {tmp_path}: {e}")
+                    continue
+            else:  # txt
+                logger.info(f"Reading TXT file: {tmp_path}")
+                with open(tmp_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    text_content = f.read()
+                logger.info(f"Read {len(text_content)} characters from TXT file")
+            
+            # Parse the text content to structured JSON
+            logger.info(f"Parsing resume text content ({len(text_content) if text_content else 0} chars)...")
+            parsed_resume = resume_parser.parse_from_text(text_content)
+            logger.info(f"Successfully parsed resume")
+            
+            # Save to storage
+            storage.save_resume(parsed_resume)
+            resume_id = parsed_resume.get("candidate_id", "unknown")
+            logger.info(f"Saved parsed resume to storage with ID: {resume_id}")
+            
             uploaded_files.append({
                 "filename": file.filename,
-                "path": tmp_path,
+                "resume_id": resume_id,
                 "type": file_type,
+                "status": "saved"
             })
             
+            # Clean up temp file
+            try:
+                os.unlink(tmp_path)
+            except Exception as e:
+                logger.warning(f"Failed to delete temp file {tmp_path}: {e}")
+            
         except Exception as e:
+            logger.error(f"Error uploading resume {file.filename}: {e}")
             errors.append(f"{file.filename}: {str(e)}")
     
     return {
@@ -158,7 +222,7 @@ async def upload_resumes(files: List[UploadFile] = File(...)):
 
 @app.post("/api/upload/job-description")
 async def upload_job_description(file: UploadFile = File(...)):
-    """Upload job description file (PDF, JSON, or TXT)."""
+    """Upload job description file (PDF, JSON, or TXT) and save to storage."""
     try:
         # Save uploaded file temporarily
         suffix = Path(file.filename).suffix
@@ -186,13 +250,73 @@ async def upload_job_description(file: UploadFile = File(...)):
         else:
             raise HTTPException(status_code=400, detail="Unsupported file type")
         
+        # Process and save to storage immediately
+        logger.info(f"Processing uploaded JD file: {file.filename} ({file_type})")
+        
+        # Extract text from file
+        text_content = None
+        if file_type == "pdf":
+            try:
+                text_content = pdf_extractor.extract_text(tmp_path)
+            except Exception as pdf_error:
+                logger.error(f"Failed to extract PDF text: {pdf_error}")
+                # Fallback: try reading as text file
+                logger.info("Attempting to read PDF as text file...")
+                try:
+                    with open(tmp_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        text_content = f.read()
+                except Exception as txt_error:
+                    logger.error(f"Failed to read as text: {txt_error}")
+                    raise HTTPException(status_code=500, detail=f"Could not extract text from PDF: {str(pdf_error)}")
+        elif file_type == "json":
+            with open(tmp_path, 'r', encoding='utf-8') as f:
+                json_data = json.load(f)
+                # If it's already structured, save it directly
+                storage.save_jd(json_data)
+                jd_id = json_data.get("jd_id", "unknown")
+                logger.info(f"Saved JSON JD to storage with ID: {jd_id}")
+                # Clean up temp file
+                try:
+                    os.unlink(tmp_path)
+                except Exception as e:
+                    logger.warning(f"Failed to delete temp file {tmp_path}: {e}")
+                return {
+                    "filename": file.filename,
+                    "jd_id": jd_id,
+                    "type": file_type,
+                    "status": "saved"
+                }
+        else:  # txt
+            logger.info(f"Reading TXT file: {tmp_path}")
+            with open(tmp_path, 'r', encoding='utf-8', errors='ignore') as f:
+                text_content = f.read()
+            logger.info(f"Read {len(text_content)} characters from TXT file")
+        
+        # Parse the text content to structured JSON
+        logger.info(f"Parsing JD text content ({len(text_content) if text_content else 0} chars)...")
+        parsed_jd = jd_parser.parse_from_text(text_content)
+        logger.info(f"Successfully parsed JD")
+        
+        # Save to storage
+        storage.save_jd(parsed_jd)
+        jd_id = parsed_jd.get("jd_id", "unknown")
+        logger.info(f"Saved parsed JD to storage with ID: {jd_id}")
+        
+        # Clean up temp file
+        try:
+            os.unlink(tmp_path)
+        except Exception as e:
+            logger.warning(f"Failed to delete temp file {tmp_path}: {e}")
+        
         return {
             "filename": file.filename,
-            "path": tmp_path,
+            "jd_id": jd_id,
             "type": file_type,
+            "status": "saved"
         }
         
     except Exception as e:
+        logger.error(f"Error uploading job description: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -306,7 +430,18 @@ def process_pipeline(resume_files: List[str], jd_file: str, jd_id: str = None, s
                 # Analyze with LLM
                 if llm_analyzer is None:
                     raise ValueError("LLM analyzer is not available. Please configure API keys in .env file.")
-                llm_analysis = llm_analyzer.analyze_candidate(resume_data, jd_data)
+                
+                try:
+                    llm_analysis = llm_analyzer.analyze_candidate(resume_data, jd_data)
+                except Exception as llm_error:
+                    logger.error(f"LLM analysis failed for candidate {resume_data.get('candidate_id')}: {str(llm_error)}")
+                    # Use default values if LLM fails
+                    llm_analysis = {
+                        "similarity_score": 0.0,
+                        "must_have_matches": [],
+                        "strengths": [],
+                        "weaknesses": []
+                    }
                 
                 # Calculate hybrid score
                 score_result = hybrid_scorer.calculate_final_score(

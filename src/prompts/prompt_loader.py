@@ -109,6 +109,14 @@ Format your response as JSON:
         "requirement": "resume_section_reference"
     }}
 }}"""
+        elif prompt_name == "parse_job_description":
+            return """Parse this job description and extract structured information as JSON.
+Job Description: {job_description_text}
+Return JSON with: title, description, must_have_requirements, nice_to_have, experience_years_required."""
+        elif prompt_name == "parse_resume":
+            return """Parse this resume and extract structured information as JSON.
+Resume Text: {resume_text}
+Return JSON with: name, email, phone, skills, experience, education, summary."""
         else:
             return "Please analyze the provided information."
 

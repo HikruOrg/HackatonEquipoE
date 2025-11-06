@@ -82,9 +82,45 @@ class JDParser:
         Returns:
             Structured JD JSON
         """
-        # This would use LLM to extract structured data
-        logger.warning("LLM parsing not fully implemented, using basic parsing")
-        return self._parse_basic(text, jd_id)
+        if not self.llm_client:
+            logger.warning("LLM client not available, using basic parsing")
+            return self._parse_basic(text, jd_id)
+        
+        try:
+            # Import PromptLoader here to avoid circular dependency
+            from src.prompts import PromptLoader
+            
+            prompt_loader = PromptLoader()
+            prompt = prompt_loader.load_prompt("parse_job_description")
+            
+            # Replace placeholders
+            prompt = prompt.replace("{{jd_id}}", jd_id)
+            prompt = prompt.replace("{{raw_text}}", text)
+            prompt = prompt.replace("{{job_description_text}}", text)
+            
+            # Call LLM
+            logger.info("Using LLM to parse job description...")
+            response = self.llm_client.invoke(prompt)
+            
+            # Response is already a dict from JsonOutputParser
+            if isinstance(response, dict):
+                parsed_data = response
+            else:
+                # Fallback: try to parse as JSON string
+                import json
+                parsed_data = json.loads(response)
+            
+            # Ensure required fields
+            if not self._validate_jd_json(parsed_data):
+                logger.warning("LLM parsing returned invalid structure, using basic parsing")
+                return self._parse_basic(text, jd_id)
+            
+            logger.info("✓ Successfully parsed JD with LLM")
+            return parsed_data
+            
+        except Exception as e:
+            logger.error(f"Error parsing with LLM: {e}, falling back to basic parsing")
+            return self._parse_basic(text, jd_id)
     
     def _extract_title(self, text: str) -> str:
         """Extract job title from text."""

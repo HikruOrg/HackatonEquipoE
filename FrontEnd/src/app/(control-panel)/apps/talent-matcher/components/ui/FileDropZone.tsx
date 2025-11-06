@@ -36,7 +36,7 @@ type FileDropZoneProps = {
  */
 export default function FileDropZone({
 	onFilesSelected,
-	accept = '.pdf,.json',
+	accept = '.pdf,.json,.txt',
 	multiple = true,
 	maxFiles,
 	fileType,
@@ -143,7 +143,7 @@ export default function FileDropZone({
 						or click to browse
 					</Typography>
 					<Typography variant="caption" color="text.secondary">
-						Supported formats: PDF, JSON
+						Supported formats: PDF, JSON, TXT
 					</Typography>
 				</Box>
 			</DropZoneRoot>

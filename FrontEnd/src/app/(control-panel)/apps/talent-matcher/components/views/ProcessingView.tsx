@@ -8,7 +8,6 @@ import { useAnalysisStatus, useAnalysisResults, useCancelAnalysis } from '../../
 import type { ProcessingStatus, AnalysisResult } from '../../api/types';
 
 type ProcessingViewProps = {
-	analysisId: string;
 	onComplete: (results: AnalysisResult[]) => void;
 	onCancel?: () => void;
 };
@@ -16,9 +15,9 @@ type ProcessingViewProps = {
 /**
  * ProcessingView - View showing analysis progress
  */
-export default function ProcessingView({ analysisId, onComplete, onCancel }: ProcessingViewProps) {
-	const { data: status } = useAnalysisStatus(analysisId, true);
-	const { data: results } = useAnalysisResults(analysisId, status?.status === 'completed');
+export default function ProcessingView({ onComplete, onCancel }: ProcessingViewProps) {
+	const { data: status } = useAnalysisStatus(undefined, true);
+	const { data: results } = useAnalysisResults(undefined, status?.status === 'completed');
 	const cancelMutation = useCancelAnalysis();
 
 	useEffect(() => {
@@ -28,7 +27,7 @@ export default function ProcessingView({ analysisId, onComplete, onCancel }: Pro
 	}, [status, results, onComplete]);
 
 	const handleCancel = () => {
-		cancelMutation.mutate(analysisId);
+		cancelMutation.mutate();
 		if (onCancel) {
 			onCancel();
 		}
@@ -52,7 +51,7 @@ export default function ProcessingView({ analysisId, onComplete, onCancel }: Pro
 
 			{status.status === 'error' && (
 				<Alert severity="error" sx={{ mb: 2 }}>
-					{status.error_message || 'An error occurred during processing'}
+					{status.errors.length > 0 ? status.errors.join(', ') : 'An error occurred during processing'}
 				</Alert>
 			)}
 

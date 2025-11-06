@@ -20,18 +20,16 @@ export default function TalentMatcherAppView() {
 	const [currentView, setCurrentView] = useState<ViewType>('upload');
 	const [uploadTab, setUploadTab] = useState(0);
 	const [mainTab, setMainTab] = useState(0);
-	const [analysisId, setAnalysisId] = useState<string | null>(null);
 	const [results, setResults] = useState<AnalysisResult[]>([]);
 
 	const startAnalysisMutation = useStartAnalysis();
 
 	const handleProcessFiles = async (resumes: (Resume | string)[], jobDescription: JobDescription | string) => {
 		try {
-			const response = await startAnalysisMutation.mutateAsync({
+			await startAnalysisMutation.mutateAsync({
 				resumes: resumes.map((r) => (typeof r === 'string' ? r : r.candidate_id)),
 				job_description: typeof jobDescription === 'string' ? jobDescription : jobDescription.jd_id
 			});
-			setAnalysisId(response.analysis_id);
 			setCurrentView('processing');
 		} catch (error) {
 			console.error('Error starting analysis:', error);
@@ -55,7 +53,6 @@ export default function TalentMatcherAppView() {
 		setCurrentView('upload');
 		setMainTab(1); // Tab 1 is now "New Analysis"
 		setResults([]);
-		setAnalysisId(null);
 		setUploadTab(0);
 	};
 
@@ -101,9 +98,8 @@ export default function TalentMatcherAppView() {
 								</>
 							)}
 
-							{currentView === 'processing' && analysisId && (
+							{currentView === 'processing' && (
 								<ProcessingView
-									analysisId={analysisId}
 									onComplete={handleAnalysisComplete}
 									onCancel={handleNewAnalysis}
 								/>

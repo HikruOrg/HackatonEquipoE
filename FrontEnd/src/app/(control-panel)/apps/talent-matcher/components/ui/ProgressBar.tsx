@@ -30,15 +30,18 @@ export default function ProgressBar({ status }: ProgressBarProps) {
 			case 'idle':
 				return 'Ready to start';
 			case 'processing':
-				return `Processing candidate ${status.current_candidate} of ${status.total_candidates}`;
+				return `Processing candidate ${status.progress} of ${status.total}`;
 			case 'completed':
 				return 'Analysis completed';
 			case 'error':
-				return `Error: ${status.error_message || 'Unknown error'}`;
+				return `Error: ${status.errors.length > 0 ? status.errors[0] : 'Unknown error'}`;
 			default:
 				return 'Unknown status';
 		}
 	};
+
+	// Calculate progress percentage
+	const progressPercentage = status.total > 0 ? (status.progress / status.total) * 100 : 0;
 
 	return (
 		<ProgressRoot elevation={2}>
@@ -52,7 +55,7 @@ export default function ProgressBar({ status }: ProgressBarProps) {
 			</Box>
 			<LinearProgress
 				variant="determinate"
-				value={status.progress_percentage}
+				value={progressPercentage}
 				sx={{
 					height: 8,
 					borderRadius: 4,
@@ -61,13 +64,8 @@ export default function ProgressBar({ status }: ProgressBarProps) {
 			/>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 				<Typography variant="caption" color="text.secondary">
-					{status.progress_percentage.toFixed(1)}% complete
+					{progressPercentage.toFixed(1)}% complete
 				</Typography>
-				{status.status === 'processing' && status.estimated_time_remaining && (
-					<Typography variant="caption" color="text.secondary">
-						Estimated time remaining: {formatTime(status.estimated_time_remaining)}
-					</Typography>
-				)}
 			</Box>
 		</ProgressRoot>
 	);

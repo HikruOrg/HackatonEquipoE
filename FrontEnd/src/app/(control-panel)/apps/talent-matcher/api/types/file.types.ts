@@ -1,4 +1,4 @@
-export type FileType = 'pdf' | 'json';
+export type FileType = 'pdf' | 'json' | 'txt';
 
 export type FileStatus = 'pending' | 'validating' | 'valid' | 'invalid' | 'processing' | 'processed' | 'error';
 

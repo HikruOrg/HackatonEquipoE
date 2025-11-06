@@ -124,18 +124,46 @@ export default function FileUploadView({ onProcess }: FileUploadViewProps) {
 		setStorageModalOpen(false);
 	}, []);
 
-	const handleProcess = () => {
-		// Convert uploaded files to resume/jd format
-		// For now, we'll pass the file IDs or file objects
-		const resumeIds = resumeFiles.map((f) => f.id);
-		const jdId = jdFile?.id || '';
+	const handleProcess = async () => {
+		try {
+			// Upload files to backend and get IDs
+			const resumeIds: string[] = [];
+			let jdId = '';
 
-		if (resumeIds.length > 0 && jdId) {
-			onProcess(resumeIds, jdId);
+			// Upload resume files if any
+			if (resumeFiles.length > 0) {
+				const resumeFilesToUpload = resumeFiles
+					.filter((f) => f.status === 'valid' && f.file)
+					.map((f) => f.file!);
+				
+				if (resumeFilesToUpload.length > 0) {
+					const { fileUploadApi } = await import('../../api/services');
+					const uploadResult = await fileUploadApi.uploadResumes(resumeFilesToUpload);
+					resumeIds.push(...uploadResult.files.map((f) => f.resume_id));
+				}
+			}
+
+			// Upload job description file if any
+			if (jdFile && jdFile.status === 'valid' && jdFile.file) {
+				const { fileUploadApi } = await import('../../api/services');
+				const uploadResult = await fileUploadApi.uploadJobDescription(jdFile.file);
+				jdId = uploadResult.jd_id;
+			}
+
+			// Call onProcess with the uploaded file IDs
+			if (resumeIds.length > 0 || jdId) {
+				onProcess(resumeIds, jdId);
+			}
+		} catch (error) {
+			console.error('Error uploading files:', error);
+			// Show error to user
 		}
 	};
 
-	const canProcess = resumeFiles.length > 0 && jdFile !== null && resumeFiles.every((f) => f.status === 'valid') && jdFile.status === 'valid';
+	// Allow processing if there's at least one valid resume OR one valid job description
+	const hasValidResumes = resumeFiles.length > 0 && resumeFiles.every((f) => f.status === 'valid');
+	const hasValidJD = jdFile !== null && jdFile.status === 'valid';
+	const canProcess = (hasValidResumes || hasValidJD) && !uploadMutation.isPending;
 
 	return (
 		<Box sx={{ p: 3 }}>
@@ -143,7 +171,7 @@ export default function FileUploadView({ onProcess }: FileUploadViewProps) {
 				Upload Files
 			</Typography>
 			<Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-				Upload resumes and job description files (PDF or JSON format)
+				Upload resumes or job descriptions independently (PDF, JSON, or TXT format). Files will be automatically processed with LLM.
 			</Typography>
 
 			<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 3 }}>
@@ -209,28 +237,26 @@ export default function FileUploadView({ onProcess }: FileUploadViewProps) {
 							</Box>
 						)}
 					</CardContent>
-				</Card>
-			</Box>
+		</Card>
+	</Box>
 
-			{!canProcess && (
-				<Alert severity="info" sx={{ mb: 2 }}>
-					Please upload at least one resume and one job description file to proceed.
-				</Alert>
-			)}
+	{!canProcess && (
+		<Alert severity="info" sx={{ mb: 2 }}>
+			Please upload at least one resume or one job description file to proceed. You can upload either or both independently.
+		</Alert>
+	)}
 
-			<Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-				<Button
-					variant="contained"
-					size="large"
-					startIcon={<PlayArrowIcon />}
-					onClick={handleProcess}
-					disabled={!canProcess || uploadMutation.isPending}
-				>
-					Process Files
-				</Button>
-			</Box>
-
-			<StorageSearchModal
+	<Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+		<Button
+			variant="contained"
+			size="large"
+			startIcon={<PlayArrowIcon />}
+			onClick={handleProcess}
+			disabled={!canProcess}
+		>
+			Process Files
+		</Button>
+	</Box>			<StorageSearchModal
 				open={storageModalOpen}
 				type={storageModalType}
 				onSelect={handleStorageSelect}

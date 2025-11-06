@@ -80,11 +80,11 @@ export default function ResultsTable({ results, onViewDetails }: ResultsTablePro
 						</TableCell>
 						<TableCell>
 							<TableSortLabel
-								active={sortBy === 'overall_score'}
-								direction={sortBy === 'overall_score' ? sortOrder : 'desc'}
-								onClick={() => handleSort('overall_score')}
+								active={sortBy === 'final_score'}
+								direction={sortBy === 'final_score' ? sortOrder : 'desc'}
+								onClick={() => handleSort('final_score')}
 							>
-								Overall Score
+								Final Score
 							</TableSortLabel>
 						</TableCell>
 						<TableCell>
@@ -97,13 +97,7 @@ export default function ResultsTable({ results, onViewDetails }: ResultsTablePro
 							</TableSortLabel>
 						</TableCell>
 						<TableCell>
-							<TableSortLabel
-								active={sortBy === 'must_have_hits'}
-								direction={sortBy === 'must_have_hits' ? sortOrder : 'desc'}
-								onClick={() => handleSort('must_have_hits')}
-							>
-								Must-Have Hits
-							</TableSortLabel>
+							Must-Have Matches
 						</TableCell>
 						<TableCell>Recency Boost</TableCell>
 						<TableCell width={100}>Actions</TableCell>
@@ -111,8 +105,8 @@ export default function ResultsTable({ results, onViewDetails }: ResultsTablePro
 				</TableHead>
 				<TableBody>
 					{sortedResults.map((result, index) => {
-						const scoreInfo = formatScore(result.overall_score);
-						const rowColor = result.overall_score >= 80 ? 'success.light' : result.overall_score >= 60 ? 'warning.light' : 'error.light';
+						const scoreInfo = formatScore(result.final_score);
+						const rowColor = result.final_score >= 80 ? 'success.light' : result.final_score >= 60 ? 'warning.light' : 'error.light';
 						const isExpanded = expandedRows.has(index);
 
 						return (
@@ -131,9 +125,9 @@ export default function ResultsTable({ results, onViewDetails }: ResultsTablePro
 									<TableCell>
 										<Chip label={scoreInfo.value} color={scoreInfo.color} size="small" />
 									</TableCell>
-									<TableCell>{result.similarity_score.toFixed(2)}</TableCell>
-									<TableCell>{result.must_have_hits}</TableCell>
-									<TableCell>{result.recency_boost.toFixed(2)}</TableCell>
+									<TableCell>{(result.similarity_score ?? 0).toFixed(2)}</TableCell>
+									<TableCell>{result.must_have_matches?.length ?? 0}</TableCell>
+									<TableCell>{(result.recency_boost ?? 0).toFixed(2)}</TableCell>
 									<TableCell>
 										<Box sx={{ display: 'flex', gap: 1 }}>
 											<IconButton size="small" onClick={() => toggleRow(index)}>
@@ -158,19 +152,19 @@ export default function ResultsTable({ results, onViewDetails }: ResultsTablePro
 													{result.reason_codes.map((rc, rcIndex) => (
 														<Chip
 															key={rcIndex}
-															label={`${rc.code}: ${rc.description}`}
+															label={rc}
 															size="small"
 															variant="outlined"
 														/>
 													))}
 												</Box>
-												{result.matched_requirements && result.matched_requirements.length > 0 && (
+												{result.must_have_matches && result.must_have_matches.length > 0 && (
 													<Box sx={{ mt: 2 }}>
 														<Typography variant="subtitle2" gutterBottom>
-															Matched Requirements:
+															Must-Have Matches:
 														</Typography>
 														<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-															{result.matched_requirements.map((req, reqIndex) => (
+															{result.must_have_matches.map((req, reqIndex) => (
 																<Chip key={reqIndex} label={req} size="small" color="success" />
 															))}
 														</Box>

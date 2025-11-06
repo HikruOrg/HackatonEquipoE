@@ -112,6 +112,7 @@ class PDFExtractor:
         return {
             "text": text,
             "metadata": metadata,
+            "file_type": "pdf",
         }
     
     def extract_text_from_txt(self, txt_path: str | Path) -> str:
@@ -176,6 +177,7 @@ class PDFExtractor:
         return {
             "text": text,
             "metadata": metadata,
+            "file_type": "txt",
         }
 
 

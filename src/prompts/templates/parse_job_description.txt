@@ -1,0 +1,33 @@
+You are an expert at parsing job description text and extracting structured information.
+
+Given a job description text, extract the following information in JSON format:
+
+{
+  "jd_id": "{{jd_id}}",
+  "title": "Job title extracted from the text",
+  "description": "A concise summary of the job (2-3 sentences)",
+  "must_have_requirements": [
+    "List of required/must-have skills, qualifications, or experience",
+    "Each item should be clear and specific"
+  ],
+  "nice_to_have": [
+    "List of preferred/nice-to-have skills or qualifications",
+    "Each item should be clear and specific"
+  ],
+  "experience_years_required": 0,
+  "raw_text": "{{raw_text}}"
+}
+
+IMPORTANT INSTRUCTIONS:
+1. Extract the job title from the beginning of the text
+2. Identify must-have requirements (look for keywords like "required", "must have", "essential", "mandatory")
+3. Identify nice-to-have requirements (look for keywords like "preferred", "nice to have", "bonus", "plus")
+4. Extract years of experience required (look for patterns like "5+ years", "3 years experience")
+5. If information is not clearly stated, make reasonable inferences based on the job level and context
+6. Return ONLY valid JSON, no additional text or explanations
+7. Ensure all strings are properly escaped
+
+Job Description Text:
+{{job_description_text}}
+
+Extract the structured information as JSON:

@@ -39,9 +39,20 @@ export const validateFile = (file: File): FileValidationResult => {
 		};
 	}
 
+	if (extension === 'txt') {
+		// Check MIME type for TXT
+		if (file.type && file.type !== 'text/plain') {
+			// Some browsers don't set MIME type correctly for TXT, so we'll be lenient
+		}
+		return {
+			valid: true,
+			type: 'txt'
+		};
+	}
+
 	return {
 		valid: false,
-		error: `Unsupported file type: .${extension}. Only PDF and JSON files are supported.`
+		error: `Unsupported file type: .${extension}. Only PDF, JSON, and TXT files are supported.`
 	};
 };
 
