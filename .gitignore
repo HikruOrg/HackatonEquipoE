@@ -1,0 +1,67 @@
+# Environment variables
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Data files
+data/cache/
+data/output/
+data/storage/
+data/resumes/raw/*.pdf
+data/resumes/processed/*.json
+data/job_descriptions/raw/*.pdf
+data/job_descriptions/processed/*.json
+
+# Keep directory structure but ignore content
+!data/cache/.gitkeep
+!data/output/.gitkeep
+!data/storage/.gitkeep
+!data/resumes/raw/.gitkeep
+!data/resumes/processed/.gitkeep
+!data/job_descriptions/raw/.gitkeep
+!data/job_descriptions/processed/.gitkeep
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
