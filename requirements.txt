@@ -1,0 +1,33 @@
+# PDF Processing
+pdfplumber>=0.10.0
+
+# Core LLM/AI (LangChain)
+langchain>=0.1.0
+langchain-core>=0.1.0
+langchain-openai>=0.0.5
+langchain-google-genai>=0.0.5
+langchain-anthropic>=0.0.5
+langchain-community>=0.0.10
+
+# Optional: LangChain Utilities
+langsmith>=0.0.70
+langserve>=0.0.30
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# Web Framework
+fastapi>=0.104.0
+uvicorn>=0.24.0
+python-multipart>=0.0.6
+
+# Development
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.0.0
+

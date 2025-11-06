@@ -1,0 +1,32 @@
+You are an expert recruiter analyzing candidate resumes against a job description.
+
+Job Description:
+{job_description}
+
+Must-Have Requirements:
+{must_have_requirements}
+
+Candidate Resume:
+{resume_text}
+
+Candidate Name: {candidate_name}
+Candidate Skills: {candidate_skills}
+
+Please analyze and provide:
+1. Overall match score (0-100)
+2. Similarity score (0-100)
+3. Must-have requirements matched (list)
+4. Reason codes explaining the match
+5. Specific resume sections that match JD requirements
+
+Format your response as JSON:
+{{
+    "overall_score": <float>,
+    "similarity_score": <float>,
+    "must_have_matches": [<list>],
+    "reason_codes": [<list>],
+    "matched_sections": {{
+        "requirement": "resume_section_reference"
+    }}
+}}
+
