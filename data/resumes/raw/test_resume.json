@@ -1,0 +1,86 @@
+{
+  "candidate_id": "TEST001",
+  "name": "María García López",
+  "email": "maria.garcia@example.com",
+  "phone": "+34 600 123 456",
+  "summary": "Desarrolladora Full Stack con 5 años de experiencia en Python y JavaScript. Especializada en desarrollo de APIs REST con FastAPI y aplicaciones web con React. Experiencia comprobada en diseño de arquitecturas escalables y trabajo en equipos ágiles.",
+  "experience": [
+    {
+      "title": "Senior Python Developer",
+      "company": "Tech Solutions S.A.",
+      "location": "Madrid, España",
+      "start_date": "2021-03",
+      "end_date": "2024-10",
+      "duration": "3 años 7 meses",
+      "responsibilities": [
+        "Desarrollo de APIs REST con FastAPI y Django",
+        "Implementación de microservicios con Docker y Kubernetes",
+        "Diseño de bases de datos PostgreSQL y MongoDB",
+        "Integración con servicios AWS (S3, Lambda, RDS)",
+        "Code reviews y mentoría a desarrolladores junior"
+      ],
+      "technologies": ["Python", "FastAPI", "Django", "PostgreSQL", "MongoDB", "Docker", "Kubernetes", "AWS"]
+    },
+    {
+      "title": "Full Stack Developer",
+      "company": "Digital Innovation Lab",
+      "location": "Barcelona, España",
+      "start_date": "2019-06",
+      "end_date": "2021-02",
+      "duration": "1 año 8 meses",
+      "responsibilities": [
+        "Desarrollo frontend con React y TypeScript",
+        "Backend con Python y Flask",
+        "Implementación de CI/CD con GitLab",
+        "Testing automatizado con Pytest y Jest"
+      ],
+      "technologies": ["Python", "Flask", "React", "TypeScript", "PostgreSQL", "GitLab CI/CD"]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Máster en Ingeniería de Software",
+      "institution": "Universidad Politécnica de Madrid",
+      "location": "Madrid, España",
+      "graduation_date": "2019",
+      "field": "Ingeniería de Software"
+    },
+    {
+      "degree": "Grado en Ingeniería Informática",
+      "institution": "Universidad Complutense de Madrid",
+      "location": "Madrid, España",
+      "graduation_date": "2017",
+      "field": "Ingeniería Informática"
+    }
+  ],
+  "skills": {
+    "programming_languages": ["Python", "JavaScript", "TypeScript", "SQL"],
+    "frameworks": ["FastAPI", "Django", "Flask", "React", "Vue.js"],
+    "databases": ["PostgreSQL", "MongoDB", "Redis", "MySQL"],
+    "tools": ["Docker", "Kubernetes", "Git", "GitLab CI/CD", "AWS"],
+    "methodologies": ["Agile", "Scrum", "TDD", "Microservices"]
+  },
+  "certifications": [
+    {
+      "name": "AWS Certified Solutions Architect",
+      "issuer": "Amazon Web Services",
+      "date": "2023-06"
+    },
+    {
+      "name": "Professional Scrum Master I",
+      "issuer": "Scrum.org",
+      "date": "2022-03"
+    }
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "proficiency": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "proficiency": "Avanzado (C1)"
+    }
+  ],
+  "raw_text": "María García López\nmaria.garcia@example.com | +34 600 123 456\n\nDesarrolladora Full Stack con 5 años de experiencia en Python y JavaScript. Especializada en desarrollo de APIs REST con FastAPI y aplicaciones web con React.\n\nEXPERIENCIA\nSenior Python Developer - Tech Solutions S.A. (2021-2024)\n- Desarrollo de APIs REST con FastAPI y Django\n- Implementación de microservicios con Docker y Kubernetes\n- PostgreSQL, MongoDB, AWS\n\nFull Stack Developer - Digital Innovation Lab (2019-2021)\n- React, TypeScript, Python, Flask\n\nEDUCACIÓN\nMáster en Ingeniería de Software - Universidad Politécnica de Madrid (2019)\nGrado en Ingeniería Informática - Universidad Complutense de Madrid (2017)\n\nHABILIDADES\nPython, JavaScript, TypeScript, FastAPI, Django, Flask, React, PostgreSQL, MongoDB, Docker, Kubernetes, AWS"
+}

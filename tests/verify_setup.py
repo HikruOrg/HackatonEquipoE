@@ -4,6 +4,11 @@ import sys
 import os
 from pathlib import Path
 
+# Add project root to path
+PROJECT_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+os.chdir(PROJECT_ROOT)
+
 def check_python_version():
     """Check Python version."""
     version = sys.version_info

@@ -2,6 +2,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from typing import List, Optional, Dict
 import json
 import logging
@@ -18,6 +19,12 @@ from src.scoring import HybridScorer
 from src.storage import LocalStorage
 from src.export import CSVExporter
 from src.explainability import ReasonCodes, HitMapper
+
+# Pydantic models for request bodies
+class ProcessRequest(BaseModel):
+    """Request model for processing endpoint."""
+    resume_files: List[str]
+    jd_file: str
 
 # Configure logging
 logging.basicConfig(
@@ -158,8 +165,7 @@ async def upload_job_description(file: UploadFile = File(...)):
 
 @app.post("/api/process")
 async def start_processing(
-    resume_files: List[str],
-    jd_file: str,
+    request: ProcessRequest,
     background_tasks: BackgroundTasks,
 ):
     """Start processing pipeline."""
@@ -171,13 +177,13 @@ async def start_processing(
     processing_state = {
         "status": "processing",
         "progress": 0,
-        "total": len(resume_files),
+        "total": len(request.resume_files),
         "results": [],
         "errors": [],
     }
     
     # Start background processing
-    background_tasks.add_task(process_pipeline, resume_files, jd_file)
+    background_tasks.add_task(process_pipeline, request.resume_files, request.jd_file)
     
     return {"status": "started", "message": "Processing started"}
 

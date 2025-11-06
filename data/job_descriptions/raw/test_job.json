@@ -1,0 +1,63 @@
+{
+  "jd_id": "JD001",
+  "title": "Senior Backend Developer - Python",
+  "company": "InnovateTech Solutions",
+  "location": "Madrid, España (Híbrido)",
+  "employment_type": "Full-time",
+  "salary_range": "45000-65000 EUR",
+  "description": "Buscamos un Senior Backend Developer con sólida experiencia en Python para unirse a nuestro equipo de desarrollo. Trabajarás en proyectos innovadores desarrollando APIs escalables y microservicios para clientes internacionales.",
+  "responsibilities": [
+    "Diseñar y desarrollar APIs REST robustas y escalables usando FastAPI",
+    "Implementar microservicios y arquitecturas cloud-native",
+    "Optimizar rendimiento de bases de datos y queries",
+    "Colaborar con el equipo frontend en la integración de servicios",
+    "Participar en code reviews y establecer mejores prácticas",
+    "Mentorizar a desarrolladores junior del equipo",
+    "Contribuir en la definición de la arquitectura técnica"
+  ],
+  "must_have_requirements": [
+    "5+ años de experiencia en desarrollo Python",
+    "Experiencia sólida con FastAPI o Django",
+    "Conocimiento profundo de PostgreSQL y diseño de bases de datos",
+    "Experiencia con Docker y contenedores",
+    "Conocimiento de Git y metodologías ágiles"
+  ],
+  "nice_to_have_requirements": [
+    "Experiencia con Kubernetes",
+    "Conocimiento de AWS o Azure",
+    "Experiencia con MongoDB u otras bases NoSQL",
+    "Conocimiento de arquitecturas de microservicios",
+    "Experiencia con CI/CD",
+    "Certificaciones en cloud (AWS, Azure)"
+  ],
+  "required_skills": {
+    "technical": [
+      "Python",
+      "FastAPI",
+      "Django",
+      "PostgreSQL",
+      "Docker",
+      "REST APIs",
+      "Git"
+    ],
+    "soft_skills": [
+      "Trabajo en equipo",
+      "Comunicación efectiva",
+      "Resolución de problemas",
+      "Autonomía"
+    ]
+  },
+  "preferred_education": "Grado en Ingeniería Informática o similar",
+  "benefits": [
+    "Salario competitivo",
+    "Horario flexible",
+    "2 días teletrabajo por semana",
+    "Formación continua",
+    "Seguro médico privado",
+    "Plan de carrera definido"
+  ],
+  "team_info": "Equipo de 8 desarrolladores trabajando en metodología Scrum",
+  "remote_policy": "Híbrido - 2 días remoto, 3 días oficina",
+  "experience_years_required": 5,
+  "raw_text": "Senior Backend Developer - Python\n\nInnovateTech Solutions\nMadrid, España (Híbrido)\n\nBuscamos un Senior Backend Developer con sólida experiencia en Python para unirse a nuestro equipo de desarrollo. Trabajarás en proyectos innovadores desarrollando APIs escalables y microservicios para clientes internacionales.\n\nRequisitos obligatorios:\n- 5+ años de experiencia en desarrollo Python\n- Experiencia sólida con FastAPI o Django\n- Conocimiento profundo de PostgreSQL\n- Experiencia con Docker\n- Conocimiento de Git y metodologías ágiles"
+}
