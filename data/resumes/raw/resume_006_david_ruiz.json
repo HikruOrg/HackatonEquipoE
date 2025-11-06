@@ -1,0 +1,42 @@
+{
+  "candidate_id": "CAND_006_DAVID_RUIZ",
+  "name": "David Ruiz Jiménez",
+  "email": "david.ruiz@email.com",
+  "phone": "+34 667 890 123",
+  "skills": [
+    "Node.js",
+    "Express",
+    "React",
+    "TypeScript",
+    "PostgreSQL",
+    "GraphQL",
+    "Apollo",
+    "Docker",
+    "Git",
+    "Jest"
+  ],
+  "experience": [
+    {
+      "company": "SaaS Company",
+      "position": "Full Stack Developer",
+      "dates": "2020-2024",
+      "duration_years": 4,
+      "description": "Desarrollo full stack de aplicación SaaS con React y Node.js. Implementé backend con GraphQL y Apollo Server. Diseñé base de datos PostgreSQL normalizada. Escribí tests unitarios e integración con Jest."
+    },
+    {
+      "company": "Startup Tech",
+      "position": "JavaScript Developer",
+      "dates": "2018-2020",
+      "duration_years": 2,
+      "description": "Desarrollo de aplicaciones web con JavaScript, Node.js y Express. Trabajé con MongoDB y Mongoose. Implementé autenticación con Passport.js."
+    }
+  ],
+  "education": [
+    {
+      "institution": "Universidad de Valencia",
+      "degree": "Grado en Informática",
+      "year": "2018"
+    }
+  ],
+  "raw_text": "David Ruiz Jiménez\nFull Stack Developer\n\nContacto: david.ruiz@email.com | +34 667 890 123\n\nSkills: Node.js, Express, React, TypeScript, PostgreSQL, GraphQL, Apollo, Docker, Git, Jest\n\nExperiencia:\n\nSaaS Company (2020-2024) - Full Stack Developer\nDesarrollo full stack de aplicación SaaS con React y Node.js. Implementé backend con GraphQL y Apollo Server. Diseñé base de datos PostgreSQL normalizada. Escribí tests unitarios e integración con Jest.\n\nStartup Tech (2018-2020) - JavaScript Developer\nDesarrollo de aplicaciones web con JavaScript, Node.js y Express. Trabajé con MongoDB y Mongoose. Implementé autenticación con Passport.js.\n\nEducación:\nGrado en Informática - Universidad de Valencia (2018)"
+}

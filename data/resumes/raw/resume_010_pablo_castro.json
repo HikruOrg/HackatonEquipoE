@@ -1,0 +1,47 @@
+{
+  "candidate_id": "CAND_010_PABLO_CASTRO",
+  "name": "Pablo Castro Herrera",
+  "email": "pablo.castro@email.com",
+  "phone": "+34 601 234 567",
+  "skills": [
+    "JavaScript",
+    "React",
+    "Node.js",
+    "Express",
+    "MongoDB",
+    "PostgreSQL",
+    "HTML5",
+    "CSS3",
+    "Git",
+    "Agile"
+  ],
+  "experience": [
+    {
+      "company": "Tech Startup Hub",
+      "position": "Junior Full Stack Developer",
+      "dates": "2022-2024",
+      "duration_years": 2,
+      "description": "Desarrollo full stack de aplicaciones web con React y Node.js. Trabajé con MongoDB y Express para backend. Participé en daily standups y sprints de 2 semanas. Implementé features siguiendo TDD."
+    },
+    {
+      "company": "Freelance Projects",
+      "position": "Web Developer",
+      "dates": "2021-2022",
+      "duration_years": 1,
+      "description": "Desarrollo de sitios web para clientes pequeños. Utilicé HTML, CSS, JavaScript y WordPress. Aprendí fundamentos de React y Node.js."
+    }
+  ],
+  "education": [
+    {
+      "institution": "Bootcamp FullStack Academy",
+      "degree": "Full Stack Web Development Bootcamp",
+      "year": "2021"
+    },
+    {
+      "institution": "Universidad de Málaga",
+      "degree": "Grado en Administración de Empresas (no finalizado)",
+      "year": "2019"
+    }
+  ],
+  "raw_text": "Pablo Castro Herrera\nJunior Full Stack Developer\n\nContacto: pablo.castro@email.com | +34 601 234 567\n\nSkills: JavaScript, React, Node.js, Express, MongoDB, PostgreSQL, HTML5, CSS3, Git, Agile\n\nExperiencia:\n\nTech Startup Hub (2022-2024) - Junior Full Stack Developer\nDesarrollo full stack de aplicaciones web con React y Node.js. Trabajé con MongoDB y Express para backend. Participé en daily standups y sprints de 2 semanas. Implementé features siguiendo TDD.\n\nFreelance Projects (2021-2022) - Web Developer\nDesarrollo de sitios web para clientes pequeños. Utilicé HTML, CSS, JavaScript y WordPress. Aprendí fundamentos de React y Node.js.\n\nEducación:\nFull Stack Web Development Bootcamp - Bootcamp FullStack Academy (2021)\nGrado en Administración de Empresas (no finalizado) - Universidad de Málaga (2019)"
+}

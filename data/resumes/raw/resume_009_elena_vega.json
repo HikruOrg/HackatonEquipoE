@@ -1,0 +1,42 @@
+{
+  "candidate_id": "CAND_009_ELENA_VEGA",
+  "name": "Elena Vega Navarro",
+  "email": "elena.vega@email.com",
+  "phone": "+34 690 123 456",
+  "skills": [
+    "Python",
+    "FastAPI",
+    "Django",
+    "PostgreSQL",
+    "Docker",
+    "Kubernetes",
+    "Git",
+    "AWS",
+    "Terraform",
+    "Jenkins"
+  ],
+  "experience": [
+    {
+      "company": "Enterprise Solutions Corp",
+      "position": "DevOps Engineer / Backend Developer",
+      "dates": "2019-2024",
+      "duration_years": 5,
+      "description": "Desarrollo backend con Python (FastAPI, Django) y gestión de infraestructura AWS con Terraform. Implementé pipelines CI/CD con Jenkins. Administré clusters Kubernetes para aplicaciones containerizadas con Docker."
+    },
+    {
+      "company": "Software Development Ltd",
+      "position": "Backend Developer",
+      "dates": "2017-2019",
+      "duration_years": 2,
+      "description": "Desarrollo de APIs REST con Django y PostgreSQL. Trabajé en equipo ágil con Scrum. Implementé tests automatizados con pytest y coverage >80%."
+    }
+  ],
+  "education": [
+    {
+      "institution": "Universidad Politécnica de Valencia",
+      "degree": "Grado en Ingeniería Informática",
+      "year": "2017"
+    }
+  ],
+  "raw_text": "Elena Vega Navarro\nDevOps Engineer / Backend Developer\n\nContacto: elena.vega@email.com | +34 690 123 456\n\nSkills: Python, FastAPI, Django, PostgreSQL, Docker, Kubernetes, Git, AWS, Terraform, Jenkins\n\nExperiencia:\n\nEnterprise Solutions Corp (2019-2024) - DevOps Engineer / Backend Developer\nDesarrollo backend con Python (FastAPI, Django) y gestión de infraestructura AWS con Terraform. Implementé pipelines CI/CD con Jenkins. Administré clusters Kubernetes para aplicaciones containerizadas con Docker.\n\nSoftware Development Ltd (2017-2019) - Backend Developer\nDesarrollo de APIs REST con Django y PostgreSQL. Trabajé en equipo ágil con Scrum. Implementé tests automatizados con pytest y coverage >80%.\n\nEducación:\nGrado en Ingeniería Informática - Universidad Politécnica de Valencia (2017)"
+}

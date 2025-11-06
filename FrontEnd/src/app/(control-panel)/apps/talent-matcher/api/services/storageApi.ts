@@ -98,3 +98,19 @@ export const storageApi = {
 	}
 };
 
+/**
+ * Helper function to get stored resumes
+ */
+export const getStoredResumes = async (): Promise<Resume[]> => {
+	const response = await api.get('storage/resumes').json<Resume[]>();
+	return response;
+};
+
+/**
+ * Helper function to get stored job descriptions
+ */
+export const getStoredJobDescriptions = async (): Promise<JobDescription[]> => {
+	const response = await api.get('storage/job-descriptions').json<JobDescription[]>();
+	return response;
+};
+

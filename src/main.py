@@ -9,6 +9,7 @@ import logging
 from pathlib import Path
 import tempfile
 import shutil
+from datetime import datetime
 
 from src.config import config
 from src.pdf_processing import PDFExtractor, PDFValidator
@@ -19,6 +20,7 @@ from src.scoring import HybridScorer
 from src.storage import LocalStorage
 from src.export import CSVExporter
 from src.explainability import ReasonCodes, HitMapper
+from src.startup import AutoProcessor
 
 # Pydantic models for request bodies
 class ProcessRequest(BaseModel):
@@ -65,7 +67,7 @@ llm_analyzer = LLMAnalyzer(llm_client, prompt_loader) if llm_client else None
 hybrid_scorer = HybridScorer()
 storage = LocalStorage()
 csv_exporter = CSVExporter()
-pdf_extractor = PDFExtractor()
+pdf_extractor = PDFExtractor(require_pdfplumber=False)  # Allow TXT extraction without pdfplumber
 pdf_validator = PDFValidator()
 resume_parser = ResumeParser()
 jd_parser = JDParser()
@@ -80,6 +82,21 @@ processing_state = {
 }
 
 
+@app.on_event("startup")
+async def startup_event():
+    """Run on application startup."""
+    logger.info("Starting AI Talent Matcher API...")
+    
+    # Auto-process raw files
+    try:
+        auto_processor = AutoProcessor()
+        auto_processor.process_all()
+    except Exception as e:
+        logger.error(f"Error during auto-processing: {e}")
+        # Don't fail startup if auto-processing fails
+        logger.warning("Continuing startup despite auto-processing error...")
+
+
 @app.get("/")
 async def root():
     """Root endpoint."""
@@ -88,7 +105,7 @@ async def root():
 
 @app.post("/api/upload/resumes")
 async def upload_resumes(files: List[UploadFile] = File(...)):
-    """Upload resume files (PDF or JSON)."""
+    """Upload resume files (PDF, JSON, or TXT)."""
     uploaded_files = []
     errors = []
     
@@ -106,11 +123,19 @@ async def upload_resumes(files: List[UploadFile] = File(...)):
                 if not is_valid:
                     errors.append(f"{file.filename}: {error}")
                     continue
+                file_type = "pdf"
             elif pdf_validator.is_json(tmp_path):
                 is_valid, error = pdf_validator.validate_json(tmp_path)
                 if not is_valid:
                     errors.append(f"{file.filename}: {error}")
                     continue
+                file_type = "json"
+            elif pdf_validator.is_txt(tmp_path):
+                is_valid, error = pdf_validator.validate_txt(tmp_path)
+                if not is_valid:
+                    errors.append(f"{file.filename}: {error}")
+                    continue
+                file_type = "txt"
             else:
                 errors.append(f"{file.filename}: Unsupported file type")
                 continue
@@ -118,7 +143,7 @@ async def upload_resumes(files: List[UploadFile] = File(...)):
             uploaded_files.append({
                 "filename": file.filename,
                 "path": tmp_path,
-                "type": "pdf" if pdf_validator.is_pdf(tmp_path) else "json",
+                "type": file_type,
             })
             
         except Exception as e:
@@ -133,7 +158,7 @@ async def upload_resumes(files: List[UploadFile] = File(...)):
 
 @app.post("/api/upload/job-description")
 async def upload_job_description(file: UploadFile = File(...)):
-    """Upload job description file (PDF or JSON)."""
+    """Upload job description file (PDF, JSON, or TXT)."""
     try:
         # Save uploaded file temporarily
         suffix = Path(file.filename).suffix
@@ -142,21 +167,29 @@ async def upload_job_description(file: UploadFile = File(...)):
             tmp_path = tmp_file.name
         
         # Validate file
+        file_type = None
         if pdf_validator.is_pdf(tmp_path):
             is_valid, error = pdf_validator.validate_pdf(tmp_path)
             if not is_valid:
                 raise HTTPException(status_code=400, detail=error)
+            file_type = "pdf"
         elif pdf_validator.is_json(tmp_path):
             is_valid, error = pdf_validator.validate_json(tmp_path)
             if not is_valid:
                 raise HTTPException(status_code=400, detail=error)
+            file_type = "json"
+        elif pdf_validator.is_txt(tmp_path):
+            is_valid, error = pdf_validator.validate_txt(tmp_path)
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error)
+            file_type = "txt"
         else:
             raise HTTPException(status_code=400, detail="Unsupported file type")
         
         return {
             "filename": file.filename,
             "path": tmp_path,
-            "type": "pdf" if pdf_validator.is_pdf(tmp_path) else "json",
+            "type": file_type,
         }
         
     except Exception as e:
@@ -188,14 +221,73 @@ async def start_processing(
     return {"status": "started", "message": "Processing started"}
 
 
-def process_pipeline(resume_files: List[str], jd_file: str):
-    """Process resumes against job description."""
+@app.post("/api/process/stored")
+async def start_processing_stored(
+    jd_id: str,
+    background_tasks: BackgroundTasks,
+):
+    """Start processing pipeline using stored files."""
+    global processing_state
+    
+    if processing_state["status"] == "processing":
+        raise HTTPException(status_code=400, detail="Processing already in progress")
+    
+    # Load JD file
+    jd_file_path = config.storage_jd_path / f"jd_{jd_id}.json"
+    if not jd_file_path.exists():
+        raise HTTPException(status_code=404, detail=f"Job description not found: {jd_id}")
+    
+    # Load all resume files
+    resume_files = []
+    for resume_file in config.storage_resume_path.glob("*.json"):
+        resume_files.append(str(resume_file))
+    
+    if not resume_files:
+        raise HTTPException(status_code=400, detail="No resumes found in storage")
+    
+    processing_state = {
+        "status": "processing",
+        "progress": 0,
+        "total": len(resume_files),
+        "results": [],
+        "errors": [],
+    }
+    
+    # Start background processing
+    background_tasks.add_task(process_pipeline, resume_files, str(jd_file_path), jd_id, True)
+    
+    return {
+        "status": "started",
+        "message": "Processing started",
+        "jd_id": jd_id,
+        "total_resumes": len(resume_files)
+    }
+
+
+def process_pipeline(resume_files: List[str], jd_file: str, jd_id: str = None, skip_processing: bool = False):
+    """Process resumes against job description.
+    
+    Args:
+        resume_files: List of resume file paths
+        jd_file: Path to job description file
+        jd_id: Optional JD ID to use
+        skip_processing: If True, load files directly instead of processing them
+    """
     global processing_state
     
     try:
-        # Process job description
+        # Process or load job description
         logger.info("Processing job description...")
-        jd_data = process_jd_file(jd_file)
+        if skip_processing:
+            # Load JD directly from storage (already processed)
+            with open(jd_file, 'r', encoding='utf-8') as f:
+                jd_data = json.load(f)
+        else:
+            jd_data = process_jd_file(jd_file)
+        
+        # Use provided jd_id if given, otherwise use from jd_data
+        if jd_id:
+            jd_data["jd_id"] = jd_id
         
         # Process resumes
         results = []
@@ -203,8 +295,13 @@ def process_pipeline(resume_files: List[str], jd_file: str):
             try:
                 logger.info(f"Processing resume {i+1}/{len(resume_files)}: {resume_file}")
                 
-                # Process resume
-                resume_data = process_resume_file(resume_file)
+                # Process or load resume
+                if skip_processing:
+                    # Load resume directly from storage (already processed)
+                    with open(resume_file, 'r', encoding='utf-8') as f:
+                        resume_data = json.load(f)
+                else:
+                    resume_data = process_resume_file(resume_file)
                 
                 # Analyze with LLM
                 if llm_analyzer is None:
@@ -258,6 +355,22 @@ def process_pipeline(resume_files: List[str], jd_file: str):
         processing_state["results"] = results
         processing_state["status"] = "completed"
         
+        # Save results to file for persistence
+        try:
+            results_file = config.output_path / "latest_results.json"
+            with open(results_file, "w", encoding="utf-8") as f:
+                json.dump({
+                    "jd_file": jd_file,
+                    "jd_id": jd_data.get("jd_id"),
+                    "timestamp": datetime.now().isoformat(),
+                    "results": results,
+                    "total_processed": len(results),
+                    "total_failed": len(processing_state["errors"])
+                }, f, indent=2, ensure_ascii=False)
+            logger.info(f"Results saved to {results_file}")
+        except Exception as e:
+            logger.error(f"Error saving results to file: {e}")
+        
     except Exception as e:
         logger.error(f"Error in processing pipeline: {str(e)}")
         processing_state["status"] = "error"
@@ -265,7 +378,7 @@ def process_pipeline(resume_files: List[str], jd_file: str):
 
 
 def process_resume_file(file_path: str) -> Dict:
-    """Process a resume file (PDF or JSON)."""
+    """Process a resume file (PDF, JSON, or TXT)."""
     path = Path(file_path)
     
     if pdf_validator.is_pdf(path):
@@ -290,12 +403,25 @@ def process_resume_file(file_path: str) -> Dict:
         
         return resume_data
     
+    elif pdf_validator.is_txt(path):
+        # Extract text from TXT
+        text_data = pdf_extractor.extract_text_from_txt_with_metadata(path)
+        text = text_data["text"]
+        
+        # Parse to structured JSON
+        resume_data = resume_parser.parse_from_text(text)
+        
+        # Save to storage
+        storage.save_resume(resume_data)
+        
+        return resume_data
+    
     else:
         raise ValueError(f"Unsupported file type: {path.suffix}")
 
 
 def process_jd_file(file_path: str) -> Dict:
-    """Process a job description file (PDF or JSON)."""
+    """Process a job description file (PDF, JSON, or TXT)."""
     path = Path(file_path)
     
     if pdf_validator.is_pdf(path):
@@ -320,6 +446,19 @@ def process_jd_file(file_path: str) -> Dict:
         
         return jd_data
     
+    elif pdf_validator.is_txt(path):
+        # Extract text from TXT
+        text_data = pdf_extractor.extract_text_from_txt_with_metadata(path)
+        text = text_data["text"]
+        
+        # Parse to structured JSON
+        jd_data = jd_parser.parse_from_text(text)
+        
+        # Save to storage
+        storage.save_jd(jd_data)
+        
+        return jd_data
+    
     else:
         raise ValueError(f"Unsupported file type: {path.suffix}")
 
@@ -333,13 +472,30 @@ async def get_processing_status():
 @app.get("/api/results")
 async def get_results():
     """Get ranked results."""
-    if processing_state["status"] != "completed":
-        raise HTTPException(status_code=400, detail="Processing not completed")
+    # First check if there's an active processing with results
+    if processing_state["status"] == "completed" and processing_state["results"]:
+        return {
+            "results": processing_state["results"],
+            "total": len(processing_state["results"]),
+        }
     
-    return {
-        "results": processing_state["results"],
-        "total": len(processing_state["results"]),
-    }
+    # Otherwise, try to load from file
+    try:
+        results_file = config.output_path / "latest_results.json"
+        if results_file.exists():
+            with open(results_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return {
+                    "results": data.get("results", []),
+                    "total": len(data.get("results", [])),
+                    "timestamp": data.get("timestamp"),
+                    "jd_id": data.get("jd_id")
+                }
+    except Exception as e:
+        logger.error(f"Error loading results from file: {e}")
+    
+    # If no results found anywhere
+    raise HTTPException(status_code=400, detail="Processing not completed")
 
 
 @app.get("/api/results/{candidate_id}")
@@ -366,13 +522,31 @@ async def get_candidate_details(candidate_id: str):
 @app.get("/api/storage/resumes")
 async def list_resumes():
     """List all stored resumes."""
-    return storage.list_resumes()
+    resumes_summary = storage.list_resumes()
+    # Get full resume data for each
+    full_resumes = []
+    for resume_info in resumes_summary:
+        try:
+            full_resume = storage.get_resume(resume_info['candidate_id'])
+            full_resumes.append(full_resume)
+        except Exception as e:
+            logger.warning(f"Error loading resume {resume_info['candidate_id']}: {e}")
+    return full_resumes
 
 
 @app.get("/api/storage/job-descriptions")
 async def list_job_descriptions():
     """List all stored job descriptions."""
-    return storage.list_jds()
+    jds_summary = storage.list_jds()
+    # Get full JD data for each
+    full_jds = []
+    for jd_info in jds_summary:
+        try:
+            full_jd = storage.get_jd(jd_info['jd_id'])
+            full_jds.append(full_jd)
+        except Exception as e:
+            logger.warning(f"Error loading JD {jd_info['jd_id']}: {e}")
+    return full_jds
 
 
 @app.get("/api/storage/search")

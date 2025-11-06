@@ -1,0 +1,47 @@
+{
+  "candidate_id": "CAND_005_LAURA_TORRES",
+  "name": "Laura Torres Gómez",
+  "email": "laura.torres@email.com",
+  "phone": "+34 656 789 012",
+  "skills": [
+    "Python",
+    "FastAPI",
+    "PostgreSQL",
+    "MongoDB",
+    "Docker",
+    "Kubernetes",
+    "AWS",
+    "Microservicios",
+    "Git",
+    "Agile"
+  ],
+  "experience": [
+    {
+      "company": "Cloud Systems Inc",
+      "position": "Senior Backend Engineer",
+      "dates": "2018-2024",
+      "duration_years": 6,
+      "description": "Arquitectura y desarrollo de microservicios con FastAPI y Python. Lideré equipo de 5 desarrolladores en migración a Kubernetes. Implementé CI/CD pipelines con GitLab. Trabajé extensivamente con AWS (EC2, S3, Lambda, RDS)."
+    },
+    {
+      "company": "Tech Innovations",
+      "position": "Backend Developer",
+      "dates": "2016-2018",
+      "duration_years": 2,
+      "description": "Desarrollo de APIs REST con Django. Trabajé con PostgreSQL y optimización de queries. Implementé autenticación y autorización con OAuth2."
+    }
+  ],
+  "education": [
+    {
+      "institution": "Universidad Autónoma de Madrid",
+      "degree": "Máster en Ingeniería de Software",
+      "year": "2016"
+    },
+    {
+      "institution": "Universidad Autónoma de Madrid",
+      "degree": "Grado en Ingeniería Informática",
+      "year": "2014"
+    }
+  ],
+  "raw_text": "Laura Torres Gómez\nSenior Backend Engineer\n\nContacto: laura.torres@email.com | +34 656 789 012\n\nSkills: Python, FastAPI, PostgreSQL, MongoDB, Docker, Kubernetes, AWS, Microservicios, Git, Agile\n\nExperiencia:\n\nCloud Systems Inc (2018-2024) - Senior Backend Engineer\nArquitectura y desarrollo de microservicios con FastAPI y Python. Lideré equipo de 5 desarrolladores en migración a Kubernetes. Implementé CI/CD pipelines con GitLab. Trabajé extensivamente con AWS (EC2, S3, Lambda, RDS).\n\nTech Innovations (2016-2018) - Backend Developer\nDesarrollo de APIs REST con Django. Trabajé con PostgreSQL y optimización de queries. Implementé autenticación y autorización con OAuth2.\n\nEducación:\nMáster en Ingeniería de Software - Universidad Autónoma de Madrid (2016)\nGrado en Ingeniería Informática - Universidad Autónoma de Madrid (2014)"
+}

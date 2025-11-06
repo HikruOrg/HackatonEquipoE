@@ -1,0 +1,42 @@
+{
+  "candidate_id": "CAND_007_SOFIA_MORALES",
+  "name": "Sofía Morales Castro",
+  "email": "sofia.morales@email.com",
+  "phone": "+34 678 901 234",
+  "skills": [
+    "Python",
+    "Django",
+    "Flask",
+    "PostgreSQL",
+    "SQLAlchemy",
+    "Redis",
+    "Celery",
+    "Docker",
+    "Git",
+    "pytest"
+  ],
+  "experience": [
+    {
+      "company": "E-commerce Platform",
+      "position": "Backend Developer",
+      "dates": "2021-2024",
+      "duration_years": 3,
+      "description": "Desarrollo backend para plataforma de e-commerce con Django y PostgreSQL. Implementé sistema de colas con Celery y Redis para procesos asíncronos. Optimicé queries SQL reduciendo tiempos de respuesta en 50%."
+    },
+    {
+      "company": "Data Analytics Co",
+      "position": "Python Developer",
+      "dates": "2019-2021",
+      "duration_years": 2,
+      "description": "Desarrollo de pipelines de datos con Python y Flask. Trabajé con PostgreSQL y SQLAlchemy. Creé APIs RESTful para consumo de datos procesados."
+    }
+  ],
+  "education": [
+    {
+      "institution": "Universidad de Sevilla",
+      "degree": "Grado en Ingeniería Informática",
+      "year": "2019"
+    }
+  ],
+  "raw_text": "Sofía Morales Castro\nBackend Developer\n\nContacto: sofia.morales@email.com | +34 678 901 234\n\nSkills: Python, Django, Flask, PostgreSQL, SQLAlchemy, Redis, Celery, Docker, Git, pytest\n\nExperiencia:\n\nE-commerce Platform (2021-2024) - Backend Developer\nDesarrollo backend para plataforma de e-commerce con Django y PostgreSQL. Implementé sistema de colas con Celery y Redis para procesos asíncronos. Optimicé queries SQL reduciendo tiempos de respuesta en 50%.\n\nData Analytics Co (2019-2021) - Python Developer\nDesarrollo de pipelines de datos con Python y Flask. Trabajé con PostgreSQL y SQLAlchemy. Creé APIs RESTful para consumo de datos procesados.\n\nEducación:\nGrado en Ingeniería Informática - Universidad de Sevilla (2019)"
+}

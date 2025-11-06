@@ -1,0 +1,42 @@
+{
+  "candidate_id": "CAND_003_ANA_LOPEZ",
+  "name": "Ana López Fernández",
+  "email": "ana.lopez@email.com",
+  "phone": "+34 634 567 890",
+  "skills": [
+    "Python",
+    "Django",
+    "Flask",
+    "PostgreSQL",
+    "MySQL",
+    "REST APIs",
+    "Docker",
+    "Git",
+    "Linux",
+    "CI/CD"
+  ],
+  "experience": [
+    {
+      "company": "FinTech Solutions",
+      "position": "Backend Developer",
+      "dates": "2019-2024",
+      "duration_years": 5,
+      "description": "Desarrollo de sistemas backend para aplicaciones financieras con Django y PostgreSQL. Implementé APIs RESTful seguras con autenticación JWT. Trabajé con Docker para containerización y despliegue en AWS EC2."
+    },
+    {
+      "company": "Software House Ltd",
+      "position": "Junior Python Developer",
+      "dates": "2017-2019",
+      "duration_years": 2,
+      "description": "Desarrollo de scripts de automatización y APIs con Flask. Trabajé con bases de datos MySQL y PostgreSQL. Aprendí buenas prácticas de testing con pytest."
+    }
+  ],
+  "education": [
+    {
+      "institution": "Universidad de Barcelona",
+      "degree": "Licenciatura en Informática",
+      "year": "2017"
+    }
+  ],
+  "raw_text": "Ana López Fernández\nBackend Developer\n\nContacto: ana.lopez@email.com | +34 634 567 890\n\nSkills: Python, Django, Flask, PostgreSQL, MySQL, REST APIs, Docker, Git, Linux, CI/CD\n\nExperiencia:\n\nFinTech Solutions (2019-2024) - Backend Developer\nDesarrollo de sistemas backend para aplicaciones financieras con Django y PostgreSQL. Implementé APIs RESTful seguras con autenticación JWT. Trabajé con Docker para containerización y despliegue en AWS EC2.\n\nSoftware House Ltd (2017-2019) - Junior Python Developer\nDesarrollo de scripts de automatización y APIs con Flask. Trabajé con bases de datos MySQL y PostgreSQL. Aprendí buenas prácticas de testing con pytest.\n\nEducación:\nLicenciatura en Informática - Universidad de Barcelona (2017)"
+}

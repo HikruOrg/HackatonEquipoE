@@ -8,12 +8,13 @@ export type ReasonCode = {
 export type AnalysisResult = {
 	candidate_id: string;
 	name: string;
-	overall_score: number;
+	final_score: number; // Changed from overall_score to match backend
 	similarity_score: number;
-	must_have_hits: number;
+	must_have_matches: string[]; // Changed from must_have_hits to match backend (array of matched requirements)
 	recency_boost: number;
-	reason_codes: ReasonCode[];
-	matched_requirements?: string[];
+	reason_codes: string[]; // Changed to string[] to match backend
+	hit_mappings?: Record<string, string>; // Added to match backend
+	rank?: number; // Added to match backend
 };
 
 export type AnalysisRequest = {

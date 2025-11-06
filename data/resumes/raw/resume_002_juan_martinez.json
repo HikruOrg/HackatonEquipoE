@@ -1,0 +1,42 @@
+{
+  "candidate_id": "CAND_002_JUAN_MARTINEZ",
+  "name": "Juan Martínez Rodríguez",
+  "email": "juan.martinez@email.com",
+  "phone": "+34 623 456 789",
+  "skills": [
+    "React",
+    "Node.js",
+    "TypeScript",
+    "MongoDB",
+    "Express",
+    "Next.js",
+    "TailwindCSS",
+    "GraphQL",
+    "Jest",
+    "Git"
+  ],
+  "experience": [
+    {
+      "company": "Digital Agency Pro",
+      "position": "Full Stack Developer",
+      "dates": "2021-2024",
+      "duration_years": 3,
+      "description": "Desarrollo full stack con React y Node.js. Creé aplicaciones web con Next.js y TailwindCSS. Implementé APIs GraphQL con Apollo Server. Responsable de testing con Jest y React Testing Library."
+    },
+    {
+      "company": "WebDev Studio",
+      "position": "Frontend Developer",
+      "dates": "2019-2021",
+      "duration_years": 2,
+      "description": "Desarrollo de interfaces con React y TypeScript. Trabajé en proyectos de e-commerce y landing pages responsive. Utilicé Material-UI y CSS-in-JS."
+    }
+  ],
+  "education": [
+    {
+      "institution": "Universidad Complutense de Madrid",
+      "degree": "Grado en Ingeniería de Software",
+      "year": "2019"
+    }
+  ],
+  "raw_text": "Juan Martínez Rodríguez\nFull Stack Developer\n\nContacto: juan.martinez@email.com | +34 623 456 789\n\nSkills: React, Node.js, TypeScript, MongoDB, Express, Next.js, TailwindCSS, GraphQL, Jest, Git\n\nExperiencia:\n\nDigital Agency Pro (2021-2024) - Full Stack Developer\nDesarrollo full stack con React y Node.js. Creé aplicaciones web con Next.js y TailwindCSS. Implementé APIs GraphQL con Apollo Server. Responsable de testing con Jest y React Testing Library.\n\nWebDev Studio (2019-2021) - Frontend Developer\nDesarrollo de interfaces con React y TypeScript. Trabajé en proyectos de e-commerce y landing pages responsive. Utilicé Material-UI y CSS-in-JS.\n\nEducación:\nGrado en Ingeniería de Software - Universidad Complutense de Madrid (2019)"
+}

@@ -34,7 +34,20 @@ export default defineConfig({
 		host: '0.0.0.0',
 		open: true,
 		strictPort: false,
-		port: 3000
+		port: 3000,
+		proxy: {
+			'/api': {
+				target: 'http://localhost:8000',
+				changeOrigin: true,
+				secure: false,
+				// Bypass proxy for mock API routes - let MSW handle them
+				bypass: (req, res, options) => {
+					if (req.url?.startsWith('/api/mock/')) {
+						return req.url; // Return the URL to bypass proxy
+					}
+				}
+			}
+		}
 	},
 	define: {
 		'import.meta.env.VITE_PORT': JSON.stringify(process.env.PORT || 3000),

@@ -1,0 +1,57 @@
+Senior Cloud Java Engineer (Java, Spring Boot, AWS)
+
+Responsibilities & more
+We’re seeking a Senior Fullstack Java Engineer with strong DevOps and cloud experience to help design and develop a scalable mobile application supporting thousands of concurrent users. You’ll collaborate with a cross-functional team to ensure high performance, reliability, and seamless deployment across all environments.
+
+✅ Key Responsibilities
+
+● Design and develop highly scalable and available systems using Java and Spring Boot.
+● Build and maintain cloud infrastructure on AWS, leveraging services like Aurora, Lambda, ECS, Fargate, EC2, and S3.
+● Implement Infrastructure as Code (IaC) with Terraform or equivalent tools.
+● Develop CI/CD pipelines to enable automated testing and zero-downtime deployments.
+● Integrate and manage authentication/authorization systems (Keycloak, Auth0, Okta, Azure AD).
+● Work closely with DevOps teams to ensure performance, monitoring, and cost optimization.
+● Collaborate in an Agile/Scrum environment and communicate progress proactively.
+● Experience en Angular/React.
+
+✅ What we value:
+
+● Strong backend development experience.
+● Advanced knowledge of AWS services and Terraform.
+● Passion for automation, scalability, and clean architecture.
+
+Requirements
+Skills wanted:
+Expert
+AWS
+AWS
+Java
+Spring Boot
+Proficient
+Amazon CloudWatch
+Amazon ECS
+Amazon Route 53
+CI/CD
+JUnit
+JavaScript
+Microsoft Azure
+NoSQL
+Problem Solving
+SQL
+Terraform
+VPC
+No experience, but interested
+Agile methodologies
+Amazon Neptune
+Angular
+Artificial intelligence (AI)
+Auth0
+Fullstack Java development in cloud software services
+Keycloak
+Neo4j
+Okta
+React.js
+Scrum methodologies
+Language(s) required:
+Spanish - Native or fully fluent
+English - Native or fully fluent

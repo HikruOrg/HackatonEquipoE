@@ -1,0 +1,54 @@
+María García
+Senior Backend Developer
+Email: maria.garcia@email.com | Phone: +1-555-0123
+LinkedIn: linkedin.com/in/mariagarcia
+
+PROFESSIONAL SUMMARY
+Senior Backend Developer with 5+ years of experience building scalable web applications using Python, FastAPI, and cloud technologies. Proven track record of delivering high-quality solutions and leading technical initiatives.
+
+TECHNICAL SKILLS
+- Programming Languages: Python, JavaScript, SQL
+- Frameworks: FastAPI, Django, Flask, React
+- Databases: PostgreSQL, MySQL, MongoDB, Redis
+- Cloud & DevOps: AWS (EC2, S3, Lambda), Docker, Kubernetes, CI/CD
+- Tools: Git, Jenkins, Terraform, Nginx
+
+WORK EXPERIENCE
+
+Senior Backend Developer | Tech Solutions Inc. | 2021-2023
+- Designed and implemented RESTful APIs using FastAPI serving 1M+ requests/day
+- Led migration from monolithic to microservices architecture, improving scalability by 300%
+- Implemented automated testing and CI/CD pipelines, reducing deployment time by 50%
+- Mentored 3 junior developers on best practices and code reviews
+- Technologies: Python, FastAPI, PostgreSQL, Docker, AWS, Redis
+
+Backend Developer | Digital Innovations Corp. | 2019-2021
+- Developed backend services for e-commerce platform using Django
+- Optimized database queries reducing response times by 60%
+- Integrated third-party payment gateways (Stripe, PayPal)
+- Collaborated with frontend team to design and implement APIs
+- Technologies: Python, Django, MySQL, Celery, Redis, AWS
+
+Junior Python Developer | StartupXYZ | 2018-2019
+- Built internal tools and automation scripts using Python
+- Maintained and improved existing Flask applications
+- Participated in code reviews and agile ceremonies
+- Technologies: Python, Flask, SQLite, Git
+
+EDUCATION
+
+Bachelor of Science in Computer Science
+University of Technology, 2018
+GPA: 3.8/4.0
+
+CERTIFICATIONS
+- AWS Certified Solutions Architect - Associate (2022)
+- Python Professional Certification (2020)
+
+PROJECTS
+- Open Source Contributor: Contributed to popular Python libraries on GitHub
+- Personal Project: Built a job matching platform using AI/ML (Python, FastAPI, React)
+
+LANGUAGES
+- English: Fluent
+- Spanish: Native

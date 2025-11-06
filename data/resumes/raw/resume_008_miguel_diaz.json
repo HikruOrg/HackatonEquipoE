@@ -1,0 +1,42 @@
+{
+  "candidate_id": "CAND_008_MIGUEL_DIAZ",
+  "name": "Miguel Díaz Romero",
+  "email": "miguel.diaz@email.com",
+  "phone": "+34 689 012 345",
+  "skills": [
+    "React",
+    "Next.js",
+    "TypeScript",
+    "Node.js",
+    "Material-UI",
+    "TailwindCSS",
+    "MongoDB",
+    "Git",
+    "Vercel",
+    "Figma"
+  ],
+  "experience": [
+    {
+      "company": "Digital Products Studio",
+      "position": "Frontend Developer",
+      "dates": "2021-2024",
+      "duration_years": 3,
+      "description": "Desarrollo de aplicaciones web con React y Next.js. Implementé SSR y SSG para optimización SEO. Trabajé con Material-UI y TailwindCSS para diseños responsive. Despliegue en Vercel con CI/CD automatizado."
+    },
+    {
+      "company": "Marketing Agency",
+      "position": "Web Developer",
+      "dates": "2019-2021",
+      "duration_years": 2,
+      "description": "Desarrollo de landing pages y sitios corporativos con React. Trabajé directamente con diseñadores usando Figma. Implementé animaciones con Framer Motion."
+    }
+  ],
+  "education": [
+    {
+      "institution": "Universidad Carlos III",
+      "degree": "Grado en Ingeniería Telemática",
+      "year": "2019"
+    }
+  ],
+  "raw_text": "Miguel Díaz Romero\nFrontend Developer\n\nContacto: miguel.diaz@email.com | +34 689 012 345\n\nSkills: React, Next.js, TypeScript, Node.js, Material-UI, TailwindCSS, MongoDB, Git, Vercel, Figma\n\nExperiencia:\n\nDigital Products Studio (2021-2024) - Frontend Developer\nDesarrollo de aplicaciones web con React y Next.js. Implementé SSR y SSG para optimización SEO. Trabajé con Material-UI y TailwindCSS para diseños responsive. Despliegue en Vercel con CI/CD automatizado.\n\nMarketing Agency (2019-2021) - Web Developer\nDesarrollo de landing pages y sitios corporativos con React. Trabajé directamente con diseñadores usando Figma. Implementé animaciones con Framer Motion.\n\nEducación:\nGrado en Ingeniería Telemática - Universidad Carlos III (2019)"
+}

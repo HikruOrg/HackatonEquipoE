@@ -1,0 +1,34 @@
+Senior Software Engineer - Python
+
+We are looking for an experienced Python developer to join our team.
+
+Must Have Requirements:
+- 5+ years of experience in Python development
+- Strong knowledge of FastAPI or Django frameworks
+- Experience with RESTful API design and development
+- Proficiency in SQL and database design (PostgreSQL, MySQL)
+- Experience with Git version control
+- Strong problem-solving skills
+- Bachelor's degree in Computer Science or related field
+
+Nice to Have:
+- Experience with React or modern frontend frameworks
+- Knowledge of Docker and Kubernetes
+- AWS or Azure cloud platform experience
+- Experience with microservices architecture
+- Knowledge of CI/CD pipelines
+- Familiarity with Redis and caching strategies
+
+Job Description:
+As a Senior Software Engineer, you will be responsible for designing, developing, and maintaining high-quality software solutions. You will work closely with cross-functional teams to deliver scalable and efficient applications. Your role will involve writing clean, maintainable code, conducting code reviews, and mentoring junior developers.
+
+Key Responsibilities:
+- Design and implement robust backend systems using Python
+- Collaborate with product managers and designers to define requirements
+- Write comprehensive unit and integration tests
+- Optimize application performance and scalability
+- Participate in architectural decisions
+- Mentor and guide junior team members
+- Stay updated with latest industry trends and best practices
+
+We offer competitive compensation, flexible working hours, and opportunities for professional growth.

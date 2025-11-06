@@ -65,6 +65,21 @@ class Config:
     jd_raw_dir: Path = Path(os.getenv("JD_RAW_DIR", "./data/job_descriptions/raw"))
     jd_processed_dir: Path = Path(os.getenv("JD_PROCESSED_DIR", "./data/job_descriptions/processed"))
     
+    @property
+    def storage_resume_path(self) -> Path:
+        """Path to storage for resumes."""
+        return Path(self.storage_path) / "resumes"
+    
+    @property
+    def storage_jd_path(self) -> Path:
+        """Path to storage for job descriptions."""
+        return Path(self.storage_path) / "job_descriptions"
+    
+    @property
+    def output_path(self) -> Path:
+        """Path to output directory."""
+        return Path(self.output_dir)
+    
     def __post_init__(self):
         """Ensure directories exist."""
         # Create directories if they don't exist

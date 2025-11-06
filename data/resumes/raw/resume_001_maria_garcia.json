@@ -1,0 +1,42 @@
+{
+  "candidate_id": "CAND_001_MARIA_GARCIA",
+  "name": "María García López",
+  "email": "maria.garcia@email.com",
+  "phone": "+34 612 345 678",
+  "skills": [
+    "Python",
+    "FastAPI",
+    "Django",
+    "PostgreSQL",
+    "Docker",
+    "Git",
+    "AWS",
+    "Redis",
+    "REST APIs",
+    "Microservicios"
+  ],
+  "experience": [
+    {
+      "company": "Tech Solutions S.A.",
+      "position": "Senior Backend Developer",
+      "dates": "2020-2024",
+      "duration_years": 4,
+      "description": "Desarrollo de APIs RESTful con FastAPI para plataforma de e-commerce. Lideré la migración de monolito a microservicios usando Docker y Kubernetes. Implementé sistema de caching con Redis que mejoró performance en 60%."
+    },
+    {
+      "company": "StartupXYZ",
+      "position": "Backend Developer",
+      "dates": "2018-2020",
+      "duration_years": 2,
+      "description": "Desarrollo backend con Django y PostgreSQL. Implementé APIs para aplicación móvil con más de 100k usuarios. Trabajé con metodologías ágiles (Scrum)."
+    }
+  ],
+  "education": [
+    {
+      "institution": "Universidad Politécnica de Madrid",
+      "degree": "Grado en Ingeniería Informática",
+      "year": "2018"
+    }
+  ],
+  "raw_text": "María García López\nSenior Backend Developer\n\nContacto: maria.garcia@email.com | +34 612 345 678\n\nSkills: Python, FastAPI, Django, PostgreSQL, Docker, Git, AWS, Redis, REST APIs, Microservicios\n\nExperiencia:\n\nTech Solutions S.A. (2020-2024) - Senior Backend Developer\nDesarrollo de APIs RESTful con FastAPI para plataforma de e-commerce. Lideré la migración de monolito a microservicios usando Docker y Kubernetes. Implementé sistema de caching con Redis que mejoró performance en 60%.\n\nStartupXYZ (2018-2020) - Backend Developer\nDesarrollo backend con Django y PostgreSQL. Implementé APIs para aplicación móvil con más de 100k usuarios. Trabajé con metodologías ágiles (Scrum).\n\nEducación:\nGrado en Ingeniería Informática - Universidad Politécnica de Madrid (2018)"
+}

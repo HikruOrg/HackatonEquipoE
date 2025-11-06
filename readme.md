@@ -9,7 +9,7 @@ AI Talent Matcher es una plataforma completa que analiza resumes/CVs y job descr
 - **Análisis Semántico con LLM** (Google Gemini): Evaluación profunda de experiencia, skills y fit cultural
 - **Scoring Híbrido**: Combina similarity score, must-have requirements, y recency boost
 - **Explainability**: Reason codes detallados que explican por qué cada candidato es rankeado
-- **Procesamiento de PDFs**: Extracción inteligente de texto de CVs en PDF
+- **Procesamiento de Múltiples Formatos**: Soporta archivos PDF, JSON y TXT
 - **API REST**: Backend robusto con FastAPI
 - **UI Moderna**: Frontend React con Material-UI
 
@@ -247,8 +247,8 @@ HackatonEquipoE/
 
 1. Ir a `http://localhost:3000`
 2. Seleccionar pestaña **"New Analysis"** → **"File Upload"**
-3. Subir uno o más resumes (PDF o JSON)
-4. Subir una job description (JSON)
+3. Subir uno o más resumes (PDF, JSON, o TXT)
+4. Subir una job description (PDF, JSON, o TXT)
 5. Click en **"Start Analysis"**
 6. Monitorear progreso en tiempo real
 7. Ver resultados rankeados
@@ -357,8 +357,8 @@ python tests/test_api_pdf_resume.py
 - `GET /docs` - Swagger UI
 
 ### Upload
-- `POST /api/upload/resumes` - Upload resumes (PDF/JSON)
-- `POST /api/upload/job-description` - Upload job description
+- `POST /api/upload/resumes` - Upload resumes (PDF/JSON/TXT)
+- `POST /api/upload/job-description` - Upload job description (PDF/JSON/TXT)
 
 ### Processing
 - `POST /api/process` - Start analysis
@@ -398,6 +398,11 @@ python tests/test_api_pdf_resume.py
 - Validación de tamaño (max 50MB)
 - Fallback a texto plano si falla
 
+✅ **Text File Processing**
+- Soporte para archivos .txt de job descriptions y resumes
+- Codificación UTF-8 con fallback a latin-1
+- Parsing inteligente de secciones estructuradas
+
 ✅ **Explainability**
 - Reason codes detallados por candidato
 - Hit mapper para matched requirements
@@ -408,7 +413,7 @@ python tests/test_api_pdf_resume.py
 ✅ **File Upload**
 - Drag & drop de archivos
 - Preview de archivos subidos
-- Soporte PDF y JSON
+- Soporte PDF, JSON y TXT
 
 ✅ **Job Descriptions View** (Nuevo)
 - Grid de tarjetas de JDs
@@ -495,6 +500,7 @@ CACHE_TTL=7200  # 2 horas
 - [Setup Guide](SETUP.md) - Guía detallada de instalación
 - [Quickstart](QUICKSTART.md) - Inicio rápido
 - [Resume Formats](RESUME_FORMATS.md) - Formatos de CV soportados
+- [TXT Support](TXT_SUPPORT.md) - Documentación de soporte para archivos .txt
 - [JD Formats](JOB_DESCRIPTION_FORMATS.md) - Formatos de JD soportados
 - [Tests README](tests/README.md) - Documentación de tests
 
@@ -513,7 +519,7 @@ CACHE_TTL=7200  # 2 horas
 - ✨ Integración con Google Gemini LLM
 - ✨ Frontend React con Material-UI
 - ✨ Sistema de scoring híbrido
-- ✨ Procesamiento de PDFs
+- ✨ Procesamiento de PDFs, JSON y archivos TXT
 - ✨ Nueva vista: Job Descriptions con candidatos rankeados
 - ✨ Suite completa de tests
 - 📚 Documentación completa

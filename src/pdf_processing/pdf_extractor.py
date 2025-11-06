@@ -14,9 +14,15 @@ logger = logging.getLogger(__name__)
 class PDFExtractor:
     """Extract text from PDF files."""
     
-    def __init__(self):
-        """Initialize PDF extractor."""
-        if pdfplumber is None:
+    def __init__(self, require_pdfplumber: bool = True):
+        """
+        Initialize PDF extractor.
+        
+        Args:
+            require_pdfplumber: Whether to require pdfplumber (False if only using TXT extraction)
+        """
+        self._pdfplumber_available = pdfplumber is not None
+        if require_pdfplumber and not self._pdfplumber_available:
             raise ImportError(
                 "pdfplumber is required for PDF extraction. "
                 "Install it with: pip install pdfplumber"
@@ -32,6 +38,12 @@ class PDFExtractor:
         Returns:
             Extracted text as string
         """
+        if not self._pdfplumber_available:
+            raise ImportError(
+                "pdfplumber is required for PDF extraction. "
+                "Install it with: pip install pdfplumber"
+            )
+        
         pdf_path = Path(pdf_path)
         
         if not pdf_path.exists():
@@ -75,6 +87,12 @@ class PDFExtractor:
         Returns:
             Dictionary with 'text' and 'metadata' keys
         """
+        if not self._pdfplumber_available:
+            raise ImportError(
+                "pdfplumber is required for PDF extraction. "
+                "Install it with: pip install pdfplumber"
+            )
+        
         pdf_path = Path(pdf_path)
         
         text = self.extract_text(pdf_path)
@@ -95,4 +113,69 @@ class PDFExtractor:
             "text": text,
             "metadata": metadata,
         }
+    
+    def extract_text_from_txt(self, txt_path: str | Path) -> str:
+        """
+        Extract text from TXT file.
+        
+        Args:
+            txt_path: Path to TXT file
+            
+        Returns:
+            Extracted text as string
+        """
+        txt_path = Path(txt_path)
+        
+        if not txt_path.exists():
+            raise FileNotFoundError(f"TXT file not found: {txt_path}")
+        
+        logger.info(f"Extracting text from TXT: {txt_path.name}")
+        
+        try:
+            # Try UTF-8 encoding first
+            try:
+                with open(txt_path, "r", encoding="utf-8") as f:
+                    text = f.read()
+            except UnicodeDecodeError:
+                # Fallback to latin-1 encoding
+                logger.warning(f"UTF-8 decoding failed for {txt_path.name}, trying latin-1")
+                with open(txt_path, "r", encoding="latin-1") as f:
+                    text = f.read()
+            
+            if not text.strip():
+                logger.warning(f"No text found in TXT file: {txt_path.name}")
+                raise ValueError(f"TXT file is empty: {txt_path.name}")
+            
+            logger.info(f"Extracted {len(text)} characters from {txt_path.name}")
+            return text
+            
+        except Exception as e:
+            logger.error(f"Error extracting text from TXT {txt_path.name}: {str(e)}")
+            raise
+    
+    def extract_text_from_txt_with_metadata(self, txt_path: str | Path) -> dict:
+        """
+        Extract text and metadata from TXT file.
+        
+        Args:
+            txt_path: Path to TXT file
+            
+        Returns:
+            Dictionary with 'text' and 'metadata' keys
+        """
+        txt_path = Path(txt_path)
+        
+        text = self.extract_text_from_txt(txt_path)
+        
+        metadata = {
+            "file_name": txt_path.name,
+            "file_size": txt_path.stat().st_size,
+            "num_pages": 1,  # TXT files are single "page"
+        }
+        
+        return {
+            "text": text,
+            "metadata": metadata,
+        }
+
 

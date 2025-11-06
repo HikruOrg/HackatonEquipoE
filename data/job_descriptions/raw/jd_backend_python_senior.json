@@ -1,0 +1,21 @@
+{
+  "jd_id": "JD_BACKEND_PYTHON_001",
+  "title": "Senior Backend Developer - Python",
+  "must_have_requirements": [
+    "5+ años de experiencia en desarrollo Python",
+    "Experiencia sólida con FastAPI o Django",
+    "Conocimiento profundo de PostgreSQL y diseño de bases de datos",
+    "Experiencia con Docker y contenedores",
+    "Conocimiento de Git y metodologías ágiles"
+  ],
+  "nice_to_have": [
+    "Experiencia con AWS o GCP",
+    "Conocimiento de Redis y caching",
+    "Experiencia con microservicios",
+    "Conocimiento de CI/CD",
+    "Testing automatizado (pytest, unittest)"
+  ],
+  "description": "Buscamos un Senior Backend Developer con sólida experiencia en Python para unirse a nuestro equipo de desarrollo. Trabajarás en proyectos innovadores desarrollando APIs escalables y microservicios para clientes internacionales.",
+  "experience_years_required": 5,
+  "raw_text": "Senior Backend Developer - Python\n\nBuscamos un Senior Backend Developer con sólida experiencia en Python para unirse a nuestro equipo de desarrollo. Trabajarás en proyectos innovadores desarrollando APIs escalables y microservicios para clientes internacionales.\n\nRequisitos Obligatorios:\n- 5+ años de experiencia en desarrollo Python\n- Experiencia sólida con FastAPI o Django\n- Conocimiento profundo de PostgreSQL y diseño de bases de datos\n- Experiencia con Docker y contenedores\n- Conocimiento de Git y metodologías ágiles\n\nDeseable:\n- Experiencia con AWS o GCP\n- Conocimiento de Redis y caching\n- Experiencia con microservicios\n- Conocimiento de CI/CD\n- Testing automatizado (pytest, unittest)"
+}

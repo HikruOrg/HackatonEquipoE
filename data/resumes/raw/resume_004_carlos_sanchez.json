@@ -1,0 +1,42 @@
+{
+  "candidate_id": "CAND_004_CARLOS_SANCHEZ",
+  "name": "Carlos Sánchez Pérez",
+  "email": "carlos.sanchez@email.com",
+  "phone": "+34 645 678 901",
+  "skills": [
+    "JavaScript",
+    "React",
+    "Vue.js",
+    "HTML5",
+    "CSS3",
+    "Webpack",
+    "Git",
+    "Responsive Design",
+    "Figma",
+    "SASS"
+  ],
+  "experience": [
+    {
+      "company": "Creative Digital",
+      "position": "Frontend Developer",
+      "dates": "2020-2024",
+      "duration_years": 4,
+      "description": "Desarrollo de interfaces de usuario con React y Vue.js. Implementé diseños responsive siguiendo mockups de Figma. Optimicé performance de aplicaciones web mejorando tiempos de carga en 40%."
+    },
+    {
+      "company": "Freelance",
+      "position": "Web Developer",
+      "dates": "2018-2020",
+      "duration_years": 2,
+      "description": "Desarrollo de sitios web para pequeñas empresas con HTML, CSS y JavaScript vanilla. Creé landing pages optimizadas para SEO."
+    }
+  ],
+  "education": [
+    {
+      "institution": "IES Tecnológico",
+      "degree": "Técnico Superior en Desarrollo de Aplicaciones Web",
+      "year": "2018"
+    }
+  ],
+  "raw_text": "Carlos Sánchez Pérez\nFrontend Developer\n\nContacto: carlos.sanchez@email.com | +34 645 678 901\n\nSkills: JavaScript, React, Vue.js, HTML5, CSS3, Webpack, Git, Responsive Design, Figma, SASS\n\nExperiencia:\n\nCreative Digital (2020-2024) - Frontend Developer\nDesarrollo de interfaces de usuario con React y Vue.js. Implementé diseños responsive siguiendo mockups de Figma. Optimicé performance de aplicaciones web mejorando tiempos de carga en 40%.\n\nFreelance (2018-2020) - Web Developer\nDesarrollo de sitios web para pequeñas empresas con HTML, CSS y JavaScript vanilla. Creé landing pages optimizadas para SEO.\n\nEducación:\nTécnico Superior en Desarrollo de Aplicaciones Web - IES Tecnológico (2018)"
+}
